@@ -32,17 +32,26 @@ paginate: true
 
 ## 🗺️ 전체 워크플로우 구조
 
-```mermaid
-flowchart LR
-    A[OpenSpec\n컨텍스트 선언] --> B[Next.js + Prisma\n+ Supabase 구축]
-    B --> C[Vercel CLI\nCI/CD 파이프라인]
-    C --> D{작업 환경}
-    D --> |로컬 + 에디터| E[opencode / Copilot\n동기 LLM 코딩]
-    D --> |이동 중 / 비동기| F[Jules\n클라우드 위임 실행]
-    E --> G[GitHub Push]
-    F --> G
-    G --> H[Vercel 자동 배포]
-    H --> I[Cursor Automations\n이벤트 기반 상시 자동화]
+```
+OpenSpec          Next.js + Prisma      Vercel CLI
+컨텍스트 선언  →  + Supabase 구축   →  CI/CD 파이프라인
+                                              │
+                          ┌───────────────────┴───────────────────┐
+                          │ 로컬 + 에디터                          │ 이동 중 / 비동기
+                          ▼                                        ▼
+                   opencode / Copilot                           Jules
+                   동기 LLM 코딩                          클라우드 위임 실행
+                          │                                        │
+                          └───────────────────┬───────────────────┘
+                                              ▼
+                                       GitHub Push
+                                              │
+                                              ▼
+                                     Vercel 자동 배포
+                                              │
+                                              ▼
+                                   Cursor Automations
+                                   이벤트 기반 상시 자동화
 ```
 
 > 각 도구는 **독립적으로 사용 가능하지만**, 연결할수록 자동화 범위가 넓어집니다.
@@ -74,12 +83,10 @@ openspec validate add-user-score --strict   # 요구 명세 검증
 
 ```markdown
 ## Tech Stack
-- Framework: Next.js 16 (App Router, Server Components 우선)
-- Runtime: React 19
-- ORM: Prisma 7 (migration 파일로 변경 이력 관리)
-- DB Driver: @prisma/adapter-pg (pg 직접 연결)
+- Framework: Next.js 14 (App Router, Server Components 우선)
+- ORM: Prisma (migration 파일로 변경 이력 관리)
 - Database: Supabase (PostgreSQL + RLS)
-- Auth: next-auth v5 beta (@auth/prisma-adapter)
+- Auth: Supabase Auth (Google OAuth)
 - Deploy: Vercel (main → production, feature/* → preview)
 
 ## Conventions
@@ -103,17 +110,17 @@ openspec validate add-user-score --strict   # 요구 명세 검증
 **Before — 설명체 (토큰 낭비)**
 ```markdown
 ## 기술 스택
-이 프로젝트는 Next.js 16의 App Router를 사용하며,
+이 프로젝트는 Next.js 14의 App Router를 사용하며,
 데이터베이스는 Supabase의 PostgreSQL을 활용합니다.
-ORM으로는 Prisma 7을 사용하고 있으며, 마이그레이션
+ORM으로는 Prisma를 사용하고 있으며, 마이그레이션
 파일로 스키마 변경 이력을 관리합니다.
 ```
 
 **After — 압축 영문형 (토큰 최소화)**
 ```markdown
 ## stack
-fw:next16-approuter sc-first react19; orm:prisma7 adapter-pg;
-db:supabase-pg rls-enabled; auth:next-auth-v5 prisma-adapter;
+fw:next14-approuter sc-first; orm:prisma migration-files;
+db:supabase-pg rls-enabled; auth:supabase google-oauth;
 deploy:vercel main=prod feature/*=preview
 
 ## conventions
@@ -140,13 +147,12 @@ rls:insert=own select=public
 
 ### 스택 선택 근거
 
-| 레이어 | 선택 | 버전 | 이유 |
-|--------|------|------|------|
-| **프레임워크** | Next.js App Router | **16.0.8** | Server Component로 API/렌더링 통합, Vercel 네이티브 |
-| **런타임** | React | **19.2** | 동시성 렌더링, Server Actions 안정화 |
-| **ORM** | Prisma + adapter-pg | **7.0** | 타입 안전 쿼리, pg 드라이버 직접 연결로 Edge 호환 |
-| **DB** | Supabase (PostgreSQL) | — | RLS로 행 단위 접근 제어, 무료 플랜에서 실운용 가능 |
-| **인증** | next-auth v5 beta | **5.0.0-beta** | App Router 네이티브, @auth/prisma-adapter로 세션 DB 저장 |
+| 레이어 | 선택 | 이유 |
+|--------|------|------|
+| **프레임워크** | Next.js 14 App Router | Server Component로 API/렌더링 통합, Vercel 네이티브 |
+| **ORM** | Prisma | 타입 안전 쿼리, migration 파일로 스키마 변경 이력 관리 |
+| **DB** | Supabase (PostgreSQL) | RLS로 행 단위 접근 제어, 무료 플랜에서 실운용 가능 |
+| **인증** | Supabase Auth | OAuth 제공자 내장, JWT 자동 관리 |
 
 > 📌 **Vercel은 Supabase 외에도 다양한 DB를 공식 통합으로 지원합니다.**  
 > 프로젝트 요건에 따라 아래 중 선택할 수 있으며, 모두 `vercel env pull`로 연결 문자열이 자동 주입됩니다.
@@ -160,20 +166,7 @@ rls:insert=own select=public
 > | **Vercel Postgres** | Vercel 대시보드 통합 관리 | 간단한 프로젝트, 인프라 최소화 목표 시 |
 >
 > 이 예시에서는 **RLS 기반 행 단위 보안 정책**이 필요해 Supabase를 선택했습니다.
-> **화상해서 보기 — RLS(Row Level Security)란?**  
-> PostgreSQL의 기능으로, 테이블의 **각 행(row)에 대한 접근 권한을 DB 자체가 제어**합니다.  
-> 일반적인 권한 관리는 개발자가 API 코드에서 `WHERE user_id = :me` 같은 필터를 직접 작성합니다.  
-> RLS는 이 필터를 **DB 정송으로 미리 설정**해 두므로, API에서 실수로 빠뜨도 DB가 차단합니다.
->
-> ```
-> 기존 방식 (API 방어)
-> Client → API Route → [WHERE user_id = me 필터 작성] → DB
->           ↑ 여기를 빴으면 다른 사람의 데이터 노출
->
-> RLS 방식 (DB 방어)
-> Client → API Route → DB → [Policy: auth.uid() = user_id 자동 적용]
->                             ↑ API에 필터 없어도 DB가 차단
-> ```
+
 ---
 
 ### Prisma 스키마 및 Connection Pooling 설정
@@ -210,56 +203,6 @@ npx prisma migrate dev --name add-game-score
 # Prisma Studio (로컬 데이터 확인)
 npx prisma studio
 ```
-
----
-
-### 🏛️ 레이어 아키텍처 — 각 스택의 역할 분리
-
-```
-┌─────────────────────────────────────┐
-│  Browser / Client Component         │  React 19 — UI 상태, 이벤트 처리
-├─────────────────────────────────────┤
-│  Next.js App Router (Server)        │  Server Component, Route Handler
-│  └─ next-auth v5                    │  세션 검증, 로그인 흐름 (JWT / DB 세션)
-├─────────────────────────────────────┤
-│  Prisma ORM                         │  타입 안전 쿼리, migration 이력 관리
-│  └─ @prisma/adapter-pg              │  pg 드라이버 직접 연결 (Edge 호환)
-├─────────────────────────────────────┤
-│  Supabase (PostgreSQL)              │  데이터 저장
-│  └─ RLS Policy                      │  행 단위 접근 제어 (DB 레이어 보안)
-└─────────────────────────────────────┘
-```
-
-### 🔑 next-auth v5 + Prisma 세션 흐름
-
-next-auth v5는 App Router 구조에 맞게 재설계된 버전입니다.  
-`@auth/prisma-adapter`를 통해 **세션·사용자 정보를 Prisma가 관리하는 DB에 저장**합니다.
-
-```ts
-// auth.ts
-import NextAuth from "next-auth"
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import { prisma } from "@/lib/prisma"
-
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(prisma),
-  providers: [/* Google, GitHub 등 */],
-})
-```
-
-```ts
-// app/api/route.ts — 서버에서 세션 직접 참조
-import { auth } from "@/auth"
-
-export async function GET() {
-  const session = await auth()          // DB 왕복 없이 세션 검증
-  if (!session) return new Response("Unauthorized", { status: 401 })
-  // ...
-}
-```
-
-> next-auth v4까지는 `getServerSession(authOptions)`를 매번 import했지만,  
-> **v5에서는 `auth()` 한 줄로 어디서든 세션을 참조**할 수 있습니다.
 
 ---
 
@@ -322,16 +265,8 @@ vercel --prod                  # 프로덕션 즉시 배포
 
 ### 🔐 Supabase RLS 정책 — 보안 설계 관점
 
-**RLS(Row Level Security)**는 PostgreSQL의 네이티브 기능으로,  
-**테이블 순위가 아닌 행(row) 순위로** 접근 권한을 제어합니다.  
-개발자가 API에 `WHERE` 필터를 작성하는 대신, DB가 스스로 보안 정송을 적용하므로  
-**API 코드에서 필터를 빰뜨도 DB가 차단**하는 이중 보안 계층이 형성됩니다.
-
-| | 기존 API 방어 | RLS 방어 |
-|---|---|---|
-| **제어 위치** | API 코드 (`WHERE user_id = me`) | DB 정송 (Policy) |
-| **실수 가능성** | 필터 누락 시 데이터 노출 | 필터 없어도 DB가 자동 차단 |
-| **보안 감사** | 코드 리뷰 필요 | SQL Policy 확인으로 충분 |
+RLS(Row Level Security)는 DB 레이어에서 행 단위 접근을 제어합니다.  
+**API에서 필터를 빠뜨려도 DB가 차단**하므로, 보안 계층이 중복됩니다.
 
 ```sql
 -- 인증된 사용자만 자신의 점수를 INSERT 가능
@@ -494,15 +429,32 @@ jules.google.com 접속
 
 ### 사내 AI 코딩 에이전트 아키텍처 (제안)
 
-```mermaid
-flowchart TD
-    A[개발자 지시\n사내 메신저 / 웹 UI] --> B[에이전트 오케스트레이터\n사내망 내 서버]
-    B --> C[온프레미스 LLM\nOllama / vLLM]
-    B --> D[사내 GitLab\n저장소 클론 & PR 생성]
-    D --> E[사내 CI/CD\nJenkins / ArgoCD]
-    E --> F[개발 / 스테이징 서버\n격리 환경 배포]
-    F --> G[개발자 검토\nPR diff + 프리뷰 URL]
-    G --> |Approve| H[운영 반영]
+```
+개발자 지시 (사내 메신저 / 웹 UI)
+           │
+           ▼
+  에이전트 오케스트레이터 ──▶ 온프레미스 LLM (Ollama / vLLM)
+     (사내망 내 서버)
+           │
+           ▼
+     사내 GitLab
+  저장소 클론 & PR 생성
+           │
+           ▼
+    사내 CI/CD
+  Jenkins / ArgoCD
+           │
+           ▼
+  개발 / 스테이징 서버
+    격리 환경 배포
+           │
+           ▼
+  개발자 검토 (PR diff + 프리뷰 URL)
+           │
+        Approve
+           │
+           ▼
+        운영 반영
 ```
 
 **핵심 원칙**: 모든 코드와 데이터는 사내망 안에서만 이동합니다.  
@@ -526,22 +478,8 @@ LLM은 외부 API가 아닌 **온프레미스 모델**로 대체합니다.
 
 ## ⚡ Step 6 — Cursor Automations: 이벤트 기반 상시 자동화
 
-> **2026년 3월, Cursor가 Automations를 정식 출시했습니다.**  
-> Jules를 쓰기 시작한 바로 그 시점에 나온 기능입니다.
-
-Jules가 "지시받으면 실행하는 주니어"라면,  
-Cursor Automations는 "트리거가 발생하면 스스로 판단하고 움직이는 시니어"입니다.
-
-두 도구는 **경쟁 관계가 아닙니다.**  
-Jules는 **내가 원하는 시점에 기능을 위임**하고,  
-Cursor Automations는 **내가 신경 쓰지 않아도 되는 반복 작업을 상시 처리**합니다.  
-함께 쓸수록 개발자가 직접 개입해야 하는 작업의 범위가 줄어듭니다.
-
-```
-[Jules]          내가 지시 → 클라우드 실행 → PR 생성
-[Automations]    트리거 발생 → 자동 판단 → PR 생성 / 코멘트 / 알림
-[개발자]         Approve & Merge만
-```
+> Jules가 "지시받으면 실행하는 주니어"라면,  
+> Cursor Automations는 "트리거가 발생하면 스스로 판단하고 움직이는 시니어"입니다.
 
 ---
 
@@ -559,18 +497,15 @@ Cursor Automations는 **내가 신경 쓰지 않아도 되는 반복 작업을 �
 
 ### Cursor Automations 트리거 구조
 
-```mermaid
-flowchart LR
-    A[⏰ Schedule\nCron] --> Z[Cursor Cloud Agent]
-    B[🐙 GitHub\nPR 오픈 / Push / CI 실패] --> Z
-    C[💬 Slack 메시지] --> Z
-    D[📋 Linear 이슈 생성] --> Z
-    E[🚨 PagerDuty 인시던트] --> Z
-    F[🔗 Webhook] --> Z
-    Z --> G[핫픽스 PR 생성]
-    Z --> H[Slack 알림 발송]
-    Z --> I[PR 인라인 코드 리뷰]
-    Z --> J[MCP 도구 실행]
+```
+트리거                         Cursor Cloud Agent          액션
+─────────────────────────────────────────────────────────────────
+⏰ Schedule (Cron)        ─┐
+🐙 GitHub PR/Push/CI실패  ─┤
+💬 Slack 메시지           ─┼──▶  Cloud Agent  ──▶  핫픽스 PR 생성
+📋 Linear 이슈 생성       ─┤    (Memories 축적)     Slack 알림 발송
+🚨 PagerDuty 인시던트     ─┤                        PR 인라인 코드리뷰
+🔗 Webhook               ─┘                        MCP 도구 실행
 ```
 
 > **Memories 기능**: Cloud Agent가 이전 작업 컨텍스트를 기억합니다.  
@@ -634,43 +569,14 @@ Cron (매일 03:00) → 테스트 없는 함수 탐지
 
 ---
 
-### 🔗 Jules + Cursor Automations — 함께 쓸 때의 그림
-
-> Jules는 2025년 하반기부터, Cursor Automations는 2026년 3월부터 사용 가능해졌습니다.  
-> 두 도구가 동시에 갖춰진 지금이, 이 워크플로우가 완성되는 시점입니다.
-
-| 시나리오 | 담당 도구 |
-|----------|----------|
-| 새 기능 추가 요청 (출근길 스마트폰) | **Jules** — 지시 후 PR 생성 |
-| Jules PR 코드 품질 자동 검토 | **Cursor Automations** — PR 오픈 트리거 |
-| Vercel 빌드 실패 즉시 대응 | **Cursor Automations** — Webhook 트리거 |
-| 매주 의존성 보안 패치 | **Jules Scheduled Task** or **Automations Cron** |
-| 개발자가 하는 일 | **컨텍스트 설계 + Approve** |
-
-> **결론**: Jules로 "무엇을 만들지"를 위임하고, Cursor Automations로 "무엇을 지켜볼지"를 자동화하면  
-> 개발자는 **아키텍처 결정과 최종 승인**에만 집중할 수 있습니다.
-
----
-
 ## 🎮 실시간 시연 — 독박게임
 
 이 워크플로우로 실제로 만들고 운영 중인 프로젝트입니다.
 
 **👉 [dokbakgame.vercel.app](https://dokbakgame.vercel.app)**
 
-**기반 스택**: Next.js 16 + React 19 + Prisma 7 + Supabase + next-auth v5  
-**배포**: Vercel (main → production, feature/* → preview 자동 생성)
-
-| 카테고리 | 패키지 | 역할 |
-|----------|--------|------|
-| **게임 엔진** | `phaser` + `excalibur` | 2D 게임 로직, 캔버스 렌더링 |
-| **3D 렌더링** | `three` + `@react-three/fiber` | Three.js를 React 선언형으로 사용 |
-| **상태 관리** | `zustand` | 게임 진행 / UI 전역 상태 |
-| **애니메이션** | `framer-motion` | 결과 화면, 페이지 전환 연출 |
-| **AI 연동** | `openai` | 게임 내 AI 힌트 / 코멘트 생성 |
-| **실시간** | `socket.io-client` | 멀티플레이어 이벤트 수신 |
-| **차트** | `recharts` | 점수 추이, 랭킹 시각화 |
-
+- Next.js App Router + Prisma + Supabase (PostgreSQL + RLS)
+- Vercel 브랜치별 자동 배포
 - Jules로 이동 중 기능 위임 → PR → Merge 흐름 실사용
 - Copilot Agent로 DB 마이그레이션 + RLS 자동화
 
