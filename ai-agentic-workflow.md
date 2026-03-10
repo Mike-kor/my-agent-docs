@@ -213,26 +213,53 @@ npx prisma studio
 
 ---
 
-### 📦 이 프로젝트에서 실제로 쓰는 주요 패키지
+### 🏛️ 레이어 아키텍처 — 각 스택의 역할 분리
 
-> `package.json`에서 역할별로 뽑은 핵심 의존성입니다.  
-> AI 에이전트에게 컨텍스트를 줄 때 **어떤 라이브러리가 이미 있는지** 알려주면 불필요한 대안 제안을 막을 수 있습니다.
+```
+┌─────────────────────────────────────┐
+│  Browser / Client Component         │  React 19 — UI 상태, 이벤트 처리
+├─────────────────────────────────────┤
+│  Next.js App Router (Server)        │  Server Component, Route Handler
+│  └─ next-auth v5                    │  세션 검증, 로그인 흐름 (JWT / DB 세션)
+├─────────────────────────────────────┤
+│  Prisma ORM                         │  타입 안전 쿼리, migration 이력 관리
+│  └─ @prisma/adapter-pg              │  pg 드라이버 직접 연결 (Edge 호환)
+├─────────────────────────────────────┤
+│  Supabase (PostgreSQL)              │  데이터 저장
+│  └─ RLS Policy                      │  행 단위 접근 제어 (DB 레이어 보안)
+└─────────────────────────────────────┘
+```
 
-| 카테고리 | 패키지 | 역할 |
-|----------|--------|------|
-| **인증** | `next-auth@5 beta` + `@auth/prisma-adapter` | App Router 세션 관리, Prisma로 사용자/세션 DB 저장 |
-| **상태 관리** | `zustand` | 전역 클라이언트 상태 (게임 진행, UI 상태) |
-| **애니메이션** | `framer-motion` | 페이지 전환, 결과 화면 연출 |
-| **게임 엔진** | `phaser` + `excalibur` | 2D 게임 로직 (캔버스 렌더링) |
-| **3D 렌더링** | `three` + `@react-three/fiber` + `@react-three/drei` | Three.js를 React 컴포넌트로 선언적 사용 |
-| **차트** | `recharts` | 점수 추이, 랭킹 시각화 |
-| **AI 연동** | `openai` | 게임 내 AI 힌트 / 결과 코멘트 생성 |
-| **실시간** | `socket.io-client` | 멀티플레이어 이벤트 수신 |
-| **날짜** | `date-fns` | 점수 기록 타임스탬프 포맷 |
+### 🔑 next-auth v5 + Prisma 세션 흐름
 
-> 💡 **Copilot / Jules에게 넘길 때 팁**:  
-> `package.json`을 컨텍스트에 포함하면 에이전트가 "zustand를 쓰니까 Context API 대신 store를 만들어야겠다"처럼  
-> **이미 있는 스택을 활용하는 코드**를 생성합니다.
+next-auth v5는 App Router 구조에 맞게 재설계된 버전입니다.  
+`@auth/prisma-adapter`를 통해 **세션·사용자 정보를 Prisma가 관리하는 DB에 저장**합니다.
+
+```ts
+// auth.ts
+import NextAuth from "next-auth"
+import { PrismaAdapter } from "@auth/prisma-adapter"
+import { prisma } from "@/lib/prisma"
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
+  adapter: PrismaAdapter(prisma),
+  providers: [/* Google, GitHub 등 */],
+})
+```
+
+```ts
+// app/api/route.ts — 서버에서 세션 직접 참조
+import { auth } from "@/auth"
+
+export async function GET() {
+  const session = await auth()          // DB 왕복 없이 세션 검증
+  if (!session) return new Response("Unauthorized", { status: 401 })
+  // ...
+}
+```
+
+> next-auth v4까지는 `getServerSession(authOptions)`를 매번 import했지만,  
+> **v5에서는 `auth()` 한 줄로 어디서든 세션을 참조**할 수 있습니다.
 
 ---
 
@@ -599,8 +626,19 @@ Cron (매일 03:00) → 테스트 없는 함수 탐지
 
 **👉 [dokbakgame.vercel.app](https://dokbakgame.vercel.app)**
 
-- Next.js App Router + Prisma + Supabase (PostgreSQL + RLS)
-- Vercel 브랜치별 자동 배포
+**기반 스택**: Next.js 16 + React 19 + Prisma 7 + Supabase + next-auth v5  
+**배포**: Vercel (main → production, feature/* → preview 자동 생성)
+
+| 카테고리 | 패키지 | 역할 |
+|----------|--------|------|
+| **게임 엔진** | `phaser` + `excalibur` | 2D 게임 로직, 캔버스 렌더링 |
+| **3D 렌더링** | `three` + `@react-three/fiber` | Three.js를 React 선언형으로 사용 |
+| **상태 관리** | `zustand` | 게임 진행 / UI 전역 상태 |
+| **애니메이션** | `framer-motion` | 결과 화면, 페이지 전환 연출 |
+| **AI 연동** | `openai` | 게임 내 AI 힌트 / 코멘트 생성 |
+| **실시간** | `socket.io-client` | 멀티플레이어 이벤트 수신 |
+| **차트** | `recharts` | 점수 추이, 랭킹 시각화 |
+
 - Jules로 이동 중 기능 위임 → PR → Merge 흐름 실사용
 - Copilot Agent로 DB 마이그레이션 + RLS 자동화
 
