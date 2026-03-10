@@ -74,7 +74,7 @@ openspec validate add-user-score --strict   # 요구 명세 검증
 
 ```markdown
 ## Tech Stack
-- Framework: Next.js 14 (App Router, Server Components 우선)
+- Framework: Next.js 16 (App Router, Server Components 우선)
 - ORM: Prisma (migration 파일로 변경 이력 관리)
 - Database: Supabase (PostgreSQL + RLS)
 - Auth: Supabase Auth (Google OAuth)
@@ -101,7 +101,7 @@ openspec validate add-user-score --strict   # 요구 명세 검증
 **Before — 설명체 (토큰 낭비)**
 ```markdown
 ## 기술 스택
-이 프로젝트는 Next.js 14의 App Router를 사용하며,
+이 프로젝트는 Next.js 16의 App Router를 사용하며,
 데이터베이스는 Supabase의 PostgreSQL을 활용합니다.
 ORM으로는 Prisma를 사용하고 있으며, 마이그레이션
 파일로 스키마 변경 이력을 관리합니다.
@@ -110,7 +110,7 @@ ORM으로는 Prisma를 사용하고 있으며, 마이그레이션
 **After — 압축 영문형 (토큰 최소화)**
 ```markdown
 ## stack
-fw:next14-approuter sc-first; orm:prisma migration-files;
+fw:next16-approuter sc-first; orm:prisma migration-files;
 db:supabase-pg rls-enabled; auth:supabase google-oauth;
 deploy:vercel main=prod feature/*=preview
 
@@ -140,7 +140,7 @@ rls:insert=own select=public
 
 | 레이어 | 선택 | 이유 |
 |--------|------|------|
-| **프레임워크** | Next.js 14 App Router | Server Component로 API/렌더링 통합, Vercel 네이티브 |
+| **프레임워크** | Next.js 16 App Router | Server Component로 API/렌더링 통합, Vercel 네이티브 |
 | **ORM** | Prisma | 타입 안전 쿼리, migration 파일로 스키마 변경 이력 관리 |
 | **DB** | Supabase (PostgreSQL) | RLS로 행 단위 접근 제어, 무료 플랜에서 실운용 가능 |
 | **인증** | Supabase Auth | OAuth 제공자 내장, JWT 자동 관리 |
