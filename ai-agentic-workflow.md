@@ -91,6 +91,49 @@ openspec validate add-user-score --strict   # 요구 명세 검증
 
 ---
 
+### 💡 Tip — project.md를 영문 압축형으로 작성하는 이유
+
+`project.md`는 **매 요청마다 컨텍스트 윈도우에 포함**됩니다.  
+한국어 + 설명체로 작성하면 토큰 소비가 크고, LLM이 해석하는 데도 불필요한 연산이 생깁니다.
+
+**LLM이 읽는 용도이므로, 사람이 읽기 좋은 문장보다 기계가 파싱하기 좋은 구조가 효율적입니다.**
+
+**Before — 설명체 (토큰 낭비)**
+```markdown
+## 기술 스택
+이 프로젝트는 Next.js 14의 App Router를 사용하며,
+데이터베이스는 Supabase의 PostgreSQL을 활용합니다.
+ORM으로는 Prisma를 사용하고 있으며, 마이그레이션
+파일로 스키마 변경 이력을 관리합니다.
+```
+
+**After — 압축 영문형 (토큰 최소화)**
+```markdown
+## stack
+fw:next14-approuter sc-first; orm:prisma migration-files;
+db:supabase-pg rls-enabled; auth:supabase google-oauth;
+deploy:vercel main=prod feature/*=preview
+
+## conventions
+comp:src/components/ api:app/api/ route-handlers;
+env:vercel-env-pull→.env.local; lang:ko-docs en-code
+
+## domain
+game=dokbakgame; score-table=game_scores(userId,score,gameName);
+rls:insert=own select=public
+```
+
+| 항목 | 설명체 (한국어) | 압축 영문형 |
+|------|----------------|------------|
+| 토큰 수 (예시) | ~180 tokens | ~45 tokens |
+| LLM 파싱 속도 | 느림 (자연어 처리) | 빠름 (키-값 구조) |
+| 다국어 에이전트 호환 | ❌ Jules 등 영문 에이전트에 불리 | ✅ 모든 에이전트 동일 해석 |
+
+> **핵심**: `project.md`는 사람이 아니라 LLM이 읽는 문서입니다.  
+> 압축할수록 **같은 컨텍스트 윈도우에 더 많은 코드 맥락을 넣을 수 있습니다.**
+
+---
+
 ## 🔨 Step 2 — Next.js + Prisma + Supabase: 풀스택 기반 구축
 
 ### 스택 선택 근거
