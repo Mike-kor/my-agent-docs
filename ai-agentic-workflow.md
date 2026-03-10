@@ -32,26 +32,17 @@ paginate: true
 
 ## 🗺️ 전체 워크플로우 구조
 
-```
-OpenSpec          Next.js + Prisma      Vercel CLI
-컨텍스트 선언  →  + Supabase 구축   →  CI/CD 파이프라인
-                                              │
-                          ┌───────────────────┴───────────────────┐
-                          │ 로컬 + 에디터                          │ 이동 중 / 비동기
-                          ▼                                        ▼
-                   opencode / Copilot                           Jules
-                   동기 LLM 코딩                          클라우드 위임 실행
-                          │                                        │
-                          └───────────────────┬───────────────────┘
-                                              ▼
-                                       GitHub Push
-                                              │
-                                              ▼
-                                     Vercel 자동 배포
-                                              │
-                                              ▼
-                                   Cursor Automations
-                                   이벤트 기반 상시 자동화
+```mermaid
+flowchart LR
+    A[OpenSpec\n컨텍스트 선언] --> B[Next.js + Prisma\n+ Supabase 구축]
+    B --> C[Vercel CLI\nCI/CD 파이프라인]
+    C --> D{작업 환경}
+    D -->|로컬 + 에디터| E[opencode / Copilot\n동기 LLM 코딩]
+    D -->|이동 중 / 비동기| F[Jules\n클라우드 위임 실행]
+    E --> G[GitHub Push]
+    F --> G
+    G --> H[Vercel 자동 배포]
+    H --> I[Cursor Automations\n이벤트 기반 상시 자동화]
 ```
 
 > 각 도구는 **독립적으로 사용 가능하지만**, 연결할수록 자동화 범위가 넓어집니다.
@@ -429,32 +420,15 @@ jules.google.com 접속
 
 ### 사내 AI 코딩 에이전트 아키텍처 (제안)
 
-```
-개발자 지시 (사내 메신저 / 웹 UI)
-           │
-           ▼
-  에이전트 오케스트레이터 ──▶ 온프레미스 LLM (Ollama / vLLM)
-     (사내망 내 서버)
-           │
-           ▼
-     사내 GitLab
-  저장소 클론 & PR 생성
-           │
-           ▼
-    사내 CI/CD
-  Jenkins / ArgoCD
-           │
-           ▼
-  개발 / 스테이징 서버
-    격리 환경 배포
-           │
-           ▼
-  개발자 검토 (PR diff + 프리뷰 URL)
-           │
-        Approve
-           │
-           ▼
-        운영 반영
+```mermaid
+flowchart TD
+    A[개발자 지시\n사내 메신저 / 웹 UI] --> B[에이전트 오케스트레이터\n사내망 내 서버]
+    B --> C[온프레미스 LLM\nOllama / vLLM]
+    B --> D[사내 GitLab\n저장소 클론 & PR 생성]
+    D --> E[사내 CI/CD\nJenkins / ArgoCD]
+    E --> F[개발 / 스테이징 서버\n격리 환경 배포]
+    F --> G[개발자 검토\nPR diff + 프리뷰 URL]
+    G -->|Approve| H[운영 반영]
 ```
 
 **핵심 원칙**: 모든 코드와 데이터는 사내망 안에서만 이동합니다.  
@@ -497,15 +471,18 @@ LLM은 외부 API가 아닌 **온프레미스 모델**로 대체합니다.
 
 ### Cursor Automations 트리거 구조
 
-```
-트리거                         Cursor Cloud Agent          액션
-─────────────────────────────────────────────────────────────────
-⏰ Schedule (Cron)        ─┐
-🐙 GitHub PR/Push/CI실패  ─┤
-💬 Slack 메시지           ─┼──▶  Cloud Agent  ──▶  핫픽스 PR 생성
-📋 Linear 이슈 생성       ─┤    (Memories 축적)     Slack 알림 발송
-🚨 PagerDuty 인시던트     ─┤                        PR 인라인 코드리뷰
-🔗 Webhook               ─┘                        MCP 도구 실행
+```mermaid
+flowchart LR
+    A[⏰ Schedule\nCron] --> Z[Cursor Cloud Agent]
+    B[🐙 GitHub\nPR / Push / CI 실패] --> Z
+    C[💬 Slack 메시지] --> Z
+    D[📋 Linear 이슈 생성] --> Z
+    E[🚨 PagerDuty 인시던트] --> Z
+    F[🔗 Webhook] --> Z
+    Z --> G[핫픽스 PR 생성]
+    Z --> H[Slack 알림 발송]
+    Z --> I[PR 인라인 코드 리뷰]
+    Z --> J[MCP 도구 실행]
 ```
 
 > **Memories 기능**: Cloud Agent가 이전 작업 컨텍스트를 기억합니다.  
