@@ -58,9 +58,9 @@
   strong { color: var(--text); font-weight: 600; }
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
-  code { font-family: var(--font-mono); font-size: 12.5px; background: var(--code-bg); border: 1px solid var(--code-border); border-radius: 3px; padding: 1px 5px; color: var(--text); }
-  pre { background: #18181b; border-radius: var(--radius); padding: 20px 24px; overflow-x: auto; margin: 16px 0; border: 1px solid #27272a; }
-  pre code { background: none; border: none; padding: 0; color: #e4e4e7; font-size: 13px; line-height: 1.6; }
+  code { font-family: var(--font-mono); font-size: 13px; background: var(--code-bg); border: 1px solid var(--code-border); border-radius: 3px; padding: 2px 6px; color: #c0392b; }
+  pre { background: #1e1e2e; border-radius: var(--radius); padding: 20px 24px; overflow-x: auto; margin: 16px 0; border: 1px solid #313149; }
+  pre code { background: none; border: none; padding: 0; color: #cdd6f4; font-size: 13.5px; line-height: 1.75; }
   .table-wrap { overflow-x: auto; margin: 16px 0; border-radius: var(--radius); border: 1px solid var(--border); }
   table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   thead tr { background: #f4f4f5; }
@@ -109,7 +109,7 @@
   <header class="doc-header">
     <div class="doc-label">Knowledge Sharing / Internal Tech Talk</div>
     <h1>AI 에이전트 기반 풀스택 개발 워크플로우</h1>
-    <p>외부에서 AI를 활용한 개인 코딩 방식을 공유하고, 사내 개발팀에 적용 가능한 구조적 인사이트를 함께 제안합니다.</p>
+    <p>개인 프로젝트에서 쓰는 AI 코딩 워크플로우를 정리했습니다. 외부 SaaS 기반이지만, 사내 환경에 적용할 수 있는 부분도 같이 다룹니다.</p>
     <div class="doc-meta">
       <span>2026-03-10</span>
       <span>Stack: Next.js 16 / Prisma 7 / Supabase / Vercel</span>
@@ -138,7 +138,7 @@
   <section id="background">
     <span class="section-number">01</span>
     <h2>배경 — 세 가지 병목</h2>
-    <p>업무에서는 프론트엔드만 담당하지만, 개인 프로젝트에서는 DB 설계부터 배포까지 혼자 처리해야 합니다. 이 워크플로우는 그 과정에서 생긴 세 가지 병목을 해결하기 위해 설계되었습니다.</p>
+    <p>업무에서는 프론트엔드만 하지만 개인 프로젝트는 DB부터 배포까지 혼자 다 해야 합니다. 세 가지가 계속 걸렸는데, 각각 어떻게 해결했는지 정리한 게 이 워크플로우입니다.</p>
     <div class="table-wrap">
       <table>
         <thead><tr><th>병목</th><th>내용</th><th>해결 도구</th></tr></thead>
@@ -154,7 +154,7 @@
   <section id="workflow">
     <span class="section-number">02</span>
     <h2>전체 워크플로우 구조</h2>
-    <p>각 도구는 독립적으로 사용 가능하지만, 연결할수록 자동화 범위가 넓어집니다.</p>
+    <p>각 도구를 따로 써도 되고, 연결할수록 자동화할 수 있는 범위가 넓어집니다.</p>
     <div class="diagram-wrap">
       <div class="diagram-toolbar">
         <span>diagram / workflow-overview</span>
@@ -186,7 +186,7 @@ flowchart LR
     <span class="section-number">03</span>
     <h2>Step 1 — OpenSpec: AI 에이전트용 컨텍스트 설계</h2>
     <h3>왜 필요한가</h3>
-    <p>LLM은 맥락 없이 좋은 코드를 생성할 수 없습니다. Cursor, Jules, opencode 등 서로 다른 AI 에이전트가 같은 프로젝트에 투입될 때, <strong>공통 사전 지식(project.md)을 미리 선언해두면 매번 설명을 반복할 필요가 없습니다.</strong></p>
+    <p>LLM은 맥락 없으면 엉뚱한 코드를 냅니다. Cursor, Jules, opencode를 같은 프로젝트에서 섞어 쓸 때 <strong>공통 사전 지식(project.md)을 미리 선언해두면 매번 스택 설명을 반복하지 않아도 됩니다.</strong></p>
     <div class="def-grid">
       <div class="def-item">
         <div class="def-key">openspec/project.md</div>
@@ -223,11 +223,11 @@ openspec validate add-user-score --strict</code></pre>
 
     <div class="callout info">
       <div class="callout-label">Design Principle</div>
-      <p>AI 에이전트는 "좋은 프롬프트"가 아닌 <strong>"좋은 컨텍스트"</strong>에 반응합니다. <code>project.md</code>는 모든 AI 에이전트의 온보딩 문서 역할을 합니다.</p>
+      <p>AI 에이전트는 "좋은 프롬프트"보다 <strong>"좋은 컨텍스트"</strong>에 더 잘 반응합니다. <code>project.md</code>가 모든 에이전트의 온보딩 문서 역할을 하는 셈입니다.</p>
     </div>
 
     <h3>Tip — project.md를 영문 압축형으로 작성하는 이유</h3>
-    <p><code>project.md</code>는 매 요청마다 컨텍스트 윈도우에 포함됩니다. 한국어 + 설명체로 작성하면 토큰 소비가 크고, LLM이 해석하는 데도 불필요한 연산이 생깁니다.</p>
+    <p><code>project.md</code>는 매 요청마다 컨텍스트 윈도우에 통째로 들어갑니다. 한국어 설명체로 쓰면 토큰이 4배 가까이 소비되고, LLM 파싱 품질도 오히려 떨어집니다.</p>
     <h4>Before — 설명체</h4>
 <pre><code>## 기술 스택
 이 프로젝트는 Next.js 16의 App Router를 사용하며,
@@ -273,7 +273,7 @@ env:vercel-env-pull→.env.local; lang:ko-docs en-code</code></pre>
     </div>
 
     <h3>Vercel DB 옵션 비교</h3>
-    <p>프로젝트 요건에 따라 아래 중 선택할 수 있으며, 모두 <code>vercel env pull</code>로 연결 문자열이 자동 주입됩니다.</p>
+    <p>요건에 맞게 선택하면 되고, 모두 <code>vercel env pull</code>로 연결 문자열이 자동 주입됩니다.</p>
     <div class="table-wrap">
       <table>
         <thead><tr><th>DB</th><th>특징</th><th>적합한 경우</th></tr></thead>
@@ -288,7 +288,7 @@ env:vercel-env-pull→.env.local; lang:ko-docs en-code</code></pre>
     </div>
 
     <h3>RLS (Row Level Security) 개념</h3>
-    <p>RLS는 PostgreSQL의 행 단위 접근 제어 메커니즘입니다. <strong>API 레이어에서 필터를 빠뜨려도 DB 레이어에서 차단</strong>하므로, 보안 계층이 중복됩니다.</p>
+    <p>RLS는 PostgreSQL의 행 단위 접근 제어 기능입니다. <strong>API 레이어에서 필터를 빠뜨려도 DB에서 막아줍니다.</strong> 보안을 이중으로 걸어두는 방식입니다.</p>
     <div class="table-wrap">
       <table>
         <thead><tr><th>구분</th><th>API 레이어 필터</th><th>RLS (DB 레이어)</th></tr></thead>
@@ -321,7 +321,7 @@ model GameScore {
 
     <div class="callout">
       <div class="callout-label">Connection Pooling 분리 이유</div>
-      <p>Vercel 서버리스 환경은 요청마다 새 연결을 생성합니다. PgBouncer가 연결을 재사용하므로 DB 연결 한도를 초과하지 않습니다.</p>
+      <p>Vercel 서버리스는 요청마다 새 커넥션을 만들어서 금방 DB 연결 한도에 걸립니다. PgBouncer가 커넥션을 재사용해주므로 이 문제를 피할 수 있습니다.</p>
     </div>
 <pre><code>npx prisma migrate dev --name add-game-score
 npx prisma studio</code></pre>
@@ -330,7 +330,7 @@ npx prisma studio</code></pre>
   <section id="step3">
     <span class="section-number">05</span>
     <h2>Step 3 — Vercel CLI: CI/CD 파이프라인 연결</h2>
-    <p>Vercel 대시보드 없이도 터미널에서 환경 변수 동기화 → 빌드 → 배포를 처리할 수 있습니다. Jules가 생성한 PR에 Vercel 프리뷰 URL이 자동 첨부되어, 모바일에서 바로 확인 가능합니다.</p>
+    <p>대시보드 없이 터미널에서 환경 변수 동기화 → 빌드 → 배포까지 끝낼 수 있습니다. Jules가 올린 PR에는 Vercel 프리뷰 URL이 자동으로 붙어서 모바일에서 바로 확인할 수 있습니다.</p>
 <pre><code>npm install -g vercel
 vercel link                    # 로컬 프로젝트 ↔ Vercel 프로젝트 연결
 vercel env pull .env.local     # 프로덕션 환경 변수를 로컬에 동기화
@@ -349,7 +349,7 @@ vercel --prod                  # 프로덕션 즉시 배포</code></pre>
       </table>
     </div>
     <div class="callout info">
-      <p>Jules가 PR을 올리면 → Vercel Preview가 자동 생성 → 스마트폰으로 코드 없이 UI 확인 후 Merge 가능. 이 흐름이 이동 중 개발을 가능하게 하는 핵심 구조입니다.</p>
+      <p>Jules PR → Vercel Preview 자동 생성 → 스마트폰으로 UI 확인 → Merge. 이동 중에도 개발 루프를 돌릴 수 있는 이유가 이 흐름 덕분입니다.</p>
     </div>
   </section>
 
@@ -365,7 +365,7 @@ vercel --prod                  # 프로덕션 즉시 배포</code></pre>
         </tbody>
       </table>
     </div>
-    <p>두 도구 모두 <code>openspec/project.md</code>를 컨텍스트로 주면, 프로젝트 컨벤션을 따르는 코드를 생성합니다.</p>
+    <p>둘 다 <code>openspec/project.md</code>를 컨텍스트로 넘기면 프로젝트 컨벤션을 이미 아는 상태로 작동합니다.</p>
 
     <h3>Copilot Agent — 멀티 파일 동시 생성 예시</h3>
 <pre><code>@workspace openspec/project.md 참고해서 아래 기능 구현해줘:
@@ -375,7 +375,7 @@ vercel --prod                  # 프로덕션 즉시 배포</code></pre>
 - app/api/scores/route.ts (POST/GET API Route)</code></pre>
 
     <div class="callout info">
-      <p>하나의 프롬프트로 프론트엔드 컴포넌트 + DB 마이그레이션 + 보안 정책 + API를 동시에 생성합니다.</p>
+      <p>프롬프트 하나로 프론트 컴포넌트 + DB 마이그레이션 + 보안 정책 + API를 한 번에 뽑을 수 있습니다.</p>
     </div>
 
     <h3>Supabase RLS 정책 — 보안 설계 관점</h3>
@@ -390,14 +390,14 @@ CREATE POLICY "read_all_scores"
   USING (true);</code></pre>
 
     <div class="callout">
-      <p>"보안을 잊지 말라고 지시"하는 것이 아니라, <strong>컨텍스트 설계로 항상 포함되게 합니다.</strong></p>
+      <p>"보안 신경 써"라고 매번 지시하는 대신, <strong>컨텍스트에 넣어두면 에이전트가 알아서 포함시킵니다.</strong></p>
     </div>
   </section>
 
   <section id="step5">
     <span class="section-number">07</span>
     <h2>Step 5 — Google Jules: 클라우드 비동기 AI 코딩 에이전트</h2>
-    <p>Jules는 내가 자리를 비운 동안 GitHub 저장소에서 직접 코드를 수정하고 PR을 올립니다.</p>
+    <p>Jules는 내가 자리를 비운 사이에 GitHub 저장소를 직접 클론해서 코드를 수정하고 PR을 올려놓습니다.</p>
 
     <h3>아키텍처 차이</h3>
 <pre><code>[기존 도구]
@@ -487,7 +487,7 @@ jules.google.com 접속
   <section id="inhouse">
     <span class="section-number">08</span>
     <h2>사내 적용 인사이트 — 금융권 개발 환경</h2>
-    <p>금융권(전자금융거래법, 망분리 규제)은 외부 AI 서비스에 코드를 직접 전송할 수 없습니다. 그러나 Jules의 <strong>아키텍처 패턴</strong> 자체는 사내에 구현 가능합니다.</p>
+    <p>금융권은 전자금융거래법·망분리 규제 때문에 외부 AI 서비스에 코드를 직접 보낼 수 없습니다. 다만 Jules의 <strong>아키텍처 패턴 자체</strong>는 사내에서 충분히 구현 가능합니다.</p>
 
     <div class="table-wrap">
       <table>
@@ -503,7 +503,7 @@ jules.google.com 접속
     </div>
 
     <div class="callout warn">
-      <p>규제가 막는 것은 "외부 SaaS 사용"이지, <strong>"비동기 AI 에이전트 패러다임"이 아닙니다.</strong></p>
+      <p>규제가 막는 건 "외부 SaaS에 코드 전송"이지, <strong>"비동기 AI 에이전트 방식 자체"가 아닙니다.</strong></p>
     </div>
 
     <h3>사내 AI 코딩 에이전트 아키텍처 (제안)</h3>
@@ -533,7 +533,7 @@ flowchart TD
 
     <div class="callout info">
       <div class="callout-label">핵심 원칙</div>
-      <p>모든 코드와 데이터는 사내망 안에서만 이동합니다. LLM은 외부 API가 아닌 온프레미스 모델로 대체합니다.</p>
+      <p>코드와 데이터는 사내망 밖으로 나가지 않습니다. LLM은 외부 API 대신 온프레미스 모델(Ollama, vLLM 등)로 교체하면 됩니다.</p>
     </div>
 
     <h3>사내 도입 시 기대 효과</h3>
@@ -553,7 +553,7 @@ flowchart TD
   <section id="step6">
     <span class="section-number">09</span>
     <h2>Step 6 — Cursor Automations: 이벤트 기반 상시 자동화</h2>
-    <p>Jules가 "지시받으면 실행하는 에이전트"라면, Cursor Automations는 "트리거가 발생하면 스스로 판단하고 움직이는 에이전트"입니다. 2026년 3월 5일 정식 출시되었습니다.</p>
+    <p>Jules가 명령을 받아야 움직이는 에이전트라면, Cursor Automations는 트리거가 들어오면 알아서 판단하고 실행합니다. 2026년 3월 5일 정식 출시됐습니다.</p>
 
     <div class="table-wrap">
       <table>
@@ -640,14 +640,14 @@ Cron (매일 03:00) → 테스트 없는 함수 탐지
 트리거 발생 → 에이전트가 자동 판단 → PR 생성 → 개발자가 Approve만</code></pre>
 
     <div class="callout info">
-      <p>개발자의 역할이 "코드를 타이핑하는 사람"에서 <strong>"에이전트가 올바르게 동작하도록 컨텍스트와 트리거를 설계하는 사람"</strong>으로 이동하고 있습니다.</p>
+      <p>개발자의 역할이 "코드를 직접 치는 사람"에서 <strong>"에이전트가 올바르게 움직이도록 컨텍스트와 트리거를 설계하는 사람"</strong>으로 바뀌고 있습니다.</p>
     </div>
   </section>
 
   <section id="demo">
     <span class="section-number">11</span>
     <h2>실시간 시연 — 독박게임</h2>
-    <p>이 워크플로우로 실제로 만들고 운영 중인 프로젝트입니다.</p>
+    <p>이 워크플로우를 그대로 적용해서 실제로 만들고 있는 프로젝트입니다.</p>
     <div class="img-wrap">
       <img src="22kBv.png" alt="독박게임 QR 코드" />
       <div class="img-desc">
