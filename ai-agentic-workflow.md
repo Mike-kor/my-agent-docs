@@ -103,9 +103,9 @@ openspec validate add-user-score --strict   # 요구 명세 검증
 **Before — 설명체 (토큰 낭비)**
 ```markdown
 ## 기술 스택
-이 프로젝트는 Next.js 14의 App Router를 사용하며,
+이 프로젝트는 Next.js 16의 App Router를 사용하며,
 데이터베이스는 Supabase의 PostgreSQL을 활용합니다.
-ORM으로는 Prisma를 사용하고 있으며, 마이그레이션
+ORM으로는 Prisma 7을 사용하고 있으며, 마이그레이션
 파일로 스키마 변경 이력을 관리합니다.
 ```
 
