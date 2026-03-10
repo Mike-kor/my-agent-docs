@@ -145,6 +145,19 @@ rls:insert=own select=public
 | **DB** | Supabase (PostgreSQL) | RLS로 행 단위 접근 제어, 무료 플랜에서 실운용 가능 |
 | **인증** | Supabase Auth | OAuth 제공자 내장, JWT 자동 관리 |
 
+> 📌 **Vercel은 Supabase 외에도 다양한 DB를 공식 통합으로 지원합니다.**  
+> 프로젝트 요건에 따라 아래 중 선택할 수 있으며, 모두 `vercel env pull`로 연결 문자열이 자동 주입됩니다.
+>
+> | DB | 특징 | 적합한 경우 |
+> |----|------|------------|
+> | **Supabase** | PostgreSQL + RLS + Auth 내장 | 인증·보안 정책이 중요한 앱 |
+> | **Neon** | 서버리스 PostgreSQL, 브랜치별 DB 스냅샷 | Vercel Preview와 DB 브랜치를 1:1 매핑할 때 |
+> | **PlanetScale** | MySQL 호환, 무중단 스키마 변경 | 대규모 트래픽, zero-downtime 마이그레이션 필요 시 |
+> | **Upstash** | 서버리스 Redis / Kafka | 세션 캐시, 큐, 실시간 카운터 |
+> | **Vercel Postgres** | Vercel 대시보드 통합 관리 | 간단한 프로젝트, 인프라 최소화 목표 시 |
+>
+> 이 예시에서는 **RLS 기반 행 단위 보안 정책**이 필요해 Supabase를 선택했습니다.
+
 ---
 
 ### Prisma 스키마 및 Connection Pooling 설정
