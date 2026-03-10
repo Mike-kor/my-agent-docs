@@ -7,90 +7,113 @@ color: #333333
 paginate: true
 ---
 
-# 🚀 프론트엔드 개발자의 AI 에이전트 풀스택 워크플로우
+# 🚀 AI 에이전트 기반 풀스택 개발 워크플로우
 
-> **"타자 속도가 아니라, 에이전트가 쉬지 않고 일할 수 있도록 시스템을 설계하는 오케스트레이션 능력이 1인 개발자의 경쟁력이다."**
-
----
-
-## 🧐 들어가며
-
-- 🏢 회사에서는 프론트엔드만, 백엔드·DB는 "그쪽 팀에 요청"
-- 🚧 사이드 프로젝트를 시작해도 풀스택의 벽에서 멈춤
-- 💸 비싼 Claude Opus / GPT Codex를 쓰면 토큰이 빠르게 소진
-
-**이 발표는 그 세 가지 문제를 동시에 해결하는 이야기입니다.**
+> **외부에서 AI를 활용한 개인 코딩 방식을 공유하고,**  
+> **사내 개발팀에 적용 가능한 구조적 인사이트를 함께 제안합니다.**
 
 ---
 
-## 🗺️ 전체 흐름 한눈에
+## 🧐 배경 — 이 워크플로우가 생긴 이유
+
+업무에서는 프론트엔드만 담당하지만, 개인 프로젝트에서는 DB 설계부터 배포까지 혼자 처리해야 합니다.
+
+세 가지 병목이 있었습니다:
+
+| 병목 | 내용 |
+|------|------|
+| **풀스택 지식 격차** | 백엔드 / DB / 인프라는 "공부"가 아닌 "실전"에서 막힘 |
+| **AI 비용** | Claude Opus / GPT Codex 계열은 토큰 소비가 빨라 장시간 사용 부담 |
+| **개발 시간** | 퇴근 후, 이동 중에는 노트북을 켤 수 없는 상황이 많음 |
+
+**이 발표는 그 세 가지 병목을 각각 어떤 도구로 해결했는지, 구조적으로 설명합니다.**
+
+---
+
+## 🗺️ 전체 워크플로우 구조
 
 ```mermaid
 flowchart LR
-    A[OpenSpec\n아키텍처 설계] --> B[Next.js + Prisma\n+ Supabase 구축]
-    B --> C[Vercel CLI\nCI/CD 연결]
-    C --> D{개발 상황}
-    D --> |로컬 PC| E[opencode / Copilot\nLLM 풀스택 코딩]
-    D --> |이동 중 / 모바일| F[Jules\n비동기 병렬 작업]
+    A[OpenSpec\n컨텍스트 선언] --> B[Next.js + Prisma\n+ Supabase 구축]
+    B --> C[Vercel CLI\nCI/CD 파이프라인]
+    C --> D{작업 환경}
+    D --> |로컬 + 에디터| E[opencode / Copilot\n동기 LLM 코딩]
+    D --> |이동 중 / 비동기| F[Jules\n클라우드 위임 실행]
     E --> G[GitHub Push]
     F --> G
-    G --> H[🚀 Vercel 자동 배포]
+    G --> H[Vercel 자동 배포]
+    H --> I[Cursor Automations\n이벤트 기반 상시 자동화]
 ```
+
+> 각 도구는 **독립적으로 사용 가능하지만**, 연결할수록 자동화 범위가 넓어집니다.
 
 ---
 
-## 🏗️ Step 1 — OpenSpec으로 아키텍처 먼저 선언하기
+## 🏗️ Step 1 — OpenSpec: AI 에이전트용 컨텍스트 설계
 
-> **"코드보다 구조가 먼저다. AI에게 컨텍스트를 주면 AI가 코드를 채운다."**
+### 왜 필요한가?
 
-코드를 짜기 전에 **OpenSpec**으로 프로젝트 아키텍처를 선언적으로 정의합니다.  
-`openspec/project.md` 하나가 이후 투입되는 모든 AI 에이전트의 **공통 사전 교육 자료**가 됩니다.
+LLM은 맥락 없이 좋은 코드를 생성할 수 없습니다.  
+Cursor, Jules, opencode 등 서로 다른 AI 에이전트가 같은 프로젝트에 투입될 때,  
+**공통 사전 지식(project.md)을 미리 선언해두면 매번 설명을 반복할 필요가 없습니다.**
+
+### 핵심 개념
+
+- `openspec/project.md` — 스택, 컨벤션, 도메인 용어를 기술
+- `openspec/changes/[id]/proposal.md` — 기능 단위 변경 제안서
+- `openspec/changes/[id]/specs/[capability]/spec.md` — SHALL/MUST 기반 요구 명세
 
 ```bash
-# 초기화
 npx openspec init
-
-# 기능 추가 제안서 생성 (proposal.md + tasks.md + spec 델타 자동 생성)
-openspec validate add-user-score --strict
+openspec validate add-user-score --strict   # 요구 명세 검증
 ```
 
 ---
 
-### 📝 openspec/project.md 예시
+### 📝 project.md 작성 예시
 
 ```markdown
 ## Tech Stack
-- Framework: Next.js 14 (App Router)
-- ORM: Prisma
-- Database: Supabase (PostgreSQL)
+- Framework: Next.js 14 (App Router, Server Components 우선)
+- ORM: Prisma (migration 파일로 변경 이력 관리)
+- Database: Supabase (PostgreSQL + RLS)
 - Auth: Supabase Auth (Google OAuth)
-- Deploy: Vercel
+- Deploy: Vercel (main → production, feature/* → preview)
 
 ## Conventions
-- 컴포넌트: src/components/, Server Components 우선
-- API: app/api/ (Route Handlers)
-- DB 변경: Prisma migration 파일로 관리
+- 컴포넌트: src/components/  
+- API Route: app/api/ (Route Handlers)
+- 환경 변수: vercel env pull로 .env.local 자동 동기화
 ```
 
-> 💡 **Key Takeaway**: OpenSpec `project.md`는 AI 에이전트의 "온보딩 문서"다.  
-> 잘 쓸수록 AI의 결과물 품질이 올라간다.
+> 💡 **설계 원칙**: AI 에이전트는 "좋은 프롬프트"가 아닌 **"좋은 컨텍스트"** 에 반응합니다.  
+> `project.md`는 모든 AI 에이전트의 온보딩 문서 역할을 합니다.
 
 ---
 
-## 🔨 Step 2 — Next.js + Prisma + Supabase 풀스택 구축
+## 🔨 Step 2 — Next.js + Prisma + Supabase: 풀스택 기반 구축
 
-```bash
-# 프로젝트 생성
-npx create-next-app@latest my-app --typescript --tailwind --app --src-dir
+### 스택 선택 근거
 
-# Prisma + Supabase 연결
-npm install prisma @prisma/client
-npx prisma init --datasource-provider postgresql
-```
+| 레이어 | 선택 | 이유 |
+|--------|------|------|
+| **프레임워크** | Next.js 14 App Router | Server Component로 API/렌더링 통합, Vercel 네이티브 |
+| **ORM** | Prisma | 타입 안전 쿼리, migration 파일로 스키마 변경 이력 관리 |
+| **DB** | Supabase (PostgreSQL) | RLS로 행 단위 접근 제어, 무료 플랜에서 실운용 가능 |
+| **인증** | Supabase Auth | OAuth 제공자 내장, JWT 자동 관리 |
 
-**Prisma 스키마 정의 (`prisma/schema.prisma`)**
+---
+
+### Prisma 스키마 및 Connection Pooling 설정
 
 ```prisma
+// prisma/schema.prisma
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")      // PgBouncer 경유 (Vercel 런타임)
+  directUrl = env("DIRECT_URL")        // 직접 연결 (migration 전용)
+}
+
 model GameScore {
   id        String   @id @default(cuid())
   userId    String
@@ -99,365 +122,386 @@ model GameScore {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
-
   @@index([gameName, score(sort: Desc)])
 }
 ```
 
+> **Connection Pooling 분리 이유**: Vercel 서버리스 환경은 요청마다 새 연결을 생성합니다.  
+> PgBouncer가 연결을 재사용하므로 DB 연결 한도를 초과하지 않습니다.
+
 ---
 
-### 🔗 Supabase Connection Pooling
-
 ```bash
-# .env
-DATABASE_URL="postgresql://postgres.[ref]:[pw]@pooler.supabase.com:6543/postgres?pgbouncer=true"
-DIRECT_URL="postgresql://postgres.[ref]:[pw]@pooler.supabase.com:5432/postgres"
-```
-
-```prisma
-datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
-}
-```
-
-```bash
-# 마이그레이션 생성 & 적용
+# 마이그레이션 생성 및 적용
 npx prisma migrate dev --name add-game-score
+
+# Prisma Studio (로컬 데이터 확인)
+npx prisma studio
 ```
 
 ---
 
-## 🚀 Step 3 — Vercel CLI로 CI/CD 연결
+## 🚀 Step 3 — Vercel CLI: CI/CD 파이프라인 연결
+
+### Vercel CLI가 필요한 이유
+
+Vercel 대시보드 없이도 터미널에서 **환경 변수 동기화 → 빌드 → 배포**를 처리할 수 있습니다.  
+Jules가 생성한 PR에 **Vercel 프리뷰 URL이 자동 첨부**되어, 모바일에서 바로 확인 가능합니다.
 
 ```bash
-# Vercel CLI 설치 및 프로젝트 연결
 npm install -g vercel
-vercel link
-
-# 프로덕션 환경 변수 로컬 동기화
-vercel env pull .env.local
-
-# 프리뷰 배포
-vercel deploy
-
-# 프로덕션 즉시 배포
-vercel --prod
+vercel link                    # 로컬 프로젝트 ↔ Vercel 프로젝트 연결
+vercel env pull .env.local     # 프로덕션 환경 변수를 로컬에 동기화
+vercel deploy                  # 프리뷰 배포 (브랜치 URL 생성)
+vercel --prod                  # 프로덕션 즉시 배포
 ```
 
 ---
 
-### 🌐 브랜치별 자동 배포
+### 브랜치 전략과 배포 환경 매핑
 
-| 브랜치 | 환경 | URL |
-|--------|------|-----|
+| 브랜치 | 배포 환경 | URL 패턴 |
+|--------|-----------|----------|
 | `main` | Production | `myapp.vercel.app` |
 | `feature/*` | Preview | `myapp-git-feature-xxx.vercel.app` |
-| PR | Preview | PR 댓글에 URL 자동 생성 |
+| Pull Request | Preview | PR 본문에 URL 자동 삽입 |
 
-> Jules가 PR을 올리면 → Vercel이 **프리뷰 URL 자동 생성** → 모바일에서 바로 확인 가능.
-
----
-
-## 💻 Step 4 — 로컬 LLM 코딩: opencode + Copilot Agent
-
-> **"로컬에서는 에디터 안의 AI가 풀스택을 커버한다."**
-
-### opencode — 터미널 기반 AI 코딩 에이전트
-
-```bash
-# 설치
-npm install -g opencode
-
-# 현재 프로젝트 기반으로 작업 지시
-opencode "Prisma 스키마에 nickname 컬럼 추가하고
-          마이그레이션 파일과 API route까지 만들어줘"
-```
-
-- 터미널 중심 / SSH 환경에서도 동작
-- `openspec/project.md`를 컨텍스트로 주면 프로젝트 규칙을 따르는 코드 생성
+> Jules가 PR을 올리면 → Vercel Preview가 자동 생성 → 스마트폰으로 **코드 없이 UI 확인 후 Merge** 가능.  
+> 이 흐름이 이동 중 개발을 가능하게 하는 핵심 구조입니다.
 
 ---
 
-### 🤖 Copilot Agent — 에디터 안의 풀스택 에이전트
+## 💻 Step 4 — 로컬 AI 코딩: opencode + Copilot Agent
 
-VS Code에서 단 한 번의 프롬프트:
+### 두 도구의 위치 차이
 
-```
-@workspace openspec/project.md 참고해서
-게임 점수 저장 기능 구현해줘.
-- src/components/GameResult.tsx (클라이언트 컴포넌트)
-- Prisma 마이그레이션 (game_scores 테이블)
-- Supabase RLS 정책 SQL
-- app/api/scores/route.ts
-```
+| 도구 | 실행 환경 | 강점 |
+|------|-----------|------|
+| **opencode** | 터미널 / CLI | SSH 환경, 에디터 없는 서버에서도 동작 |
+| **Copilot Agent** | VS Code 내 | 파일 직접 편집, 멀티 파일 동시 생성 |
 
-**Copilot Agent가 한 번에 생성하는 것들:**
-
-1. `GameResult.tsx` — 점수 저장 UI 컴포넌트
-2. `prisma/migrations/xxx_add_game_scores.sql` — 테이블 + 인덱스
-3. `supabase/policies/game_scores_rls.sql` — RLS 보안 정책
-4. `app/api/scores/route.ts` — POST / GET API
+두 도구 모두 **`openspec/project.md`를 컨텍스트로 주면**, 프로젝트 컨벤션을 따르는 코드를 생성합니다.
 
 ---
 
-### 🔐 Supabase RLS 정책 (Copilot이 자동 생성)
+### Copilot Agent — 멀티 파일 동시 생성 예시
+
+```
+@workspace openspec/project.md 참고해서 아래 기능 구현해줘:
+- src/components/GameResult.tsx (클라이언트 컴포넌트, 점수 저장 UI)
+- prisma/migrations/ (game_scores 테이블 + 인덱스)
+- supabase/policies/game_scores_rls.sql (RLS 보안 정책)
+- app/api/scores/route.ts (POST/GET API Route)
+```
+
+하나의 프롬프트로 **프론트엔드 컴포넌트 + DB 마이그레이션 + 보안 정책 + API**를 동시에 생성합니다.
+
+---
+
+### 🔐 Supabase RLS 정책 — 보안 설계 관점
+
+RLS(Row Level Security)는 DB 레이어에서 행 단위 접근을 제어합니다.  
+**API에서 필터를 빠뜨려도 DB가 차단**하므로, 보안 계층이 중복됩니다.
 
 ```sql
--- 인증된 사용자만 자신의 점수 INSERT 가능
+-- 인증된 사용자만 자신의 점수를 INSERT 가능
 CREATE POLICY "insert_own_scores"
   ON public.game_scores FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
--- 랭킹은 전체 공개
+-- 랭킹 조회는 전체 공개 (SELECT)
 CREATE POLICY "read_all_scores"
   ON public.game_scores FOR SELECT
   USING (true);
 ```
 
-> 💡 **Key Takeaway**: OpenSpec 컨텍스트 + Copilot Agent = 프론트엔드 + DB 마이그레이션 + RLS를 **한 번에**.  
-> "공부"가 아니라 "좋은 컨텍스트 설계"가 풀스택을 가능하게 한다.
+> Copilot Agent는 `project.md`에 Supabase + RLS 스택이 명시되어 있으면  
+> 위와 같은 보안 정책을 자동으로 포함해서 생성합니다.  
+> **"보안을 잊지 말라고 지시"하는 것이 아니라, 컨텍스트 설계로 항상 포함되게 합니다.**
 
 ---
 
-## 📱 Step 5 — 이동 중에도 개발: Google Jules
+## 📱 Step 5 — Google Jules: 클라우드 비동기 AI 코딩 에이전트
 
-> **"퇴근 후 지하철 안에서도 PR이 쌓인다."**
+> **Jules는 내가 자리를 비운 동안 GitHub 저장소에서 직접 코드를 수정하고 PR을 올립니다.**
 
 ---
 
-### Jules란?
+### Jules 아키텍처 — 왜 다른가?
 
-Google이 만든 **클라우드 기반 비동기 AI 코딩 에이전트**.
+일반 AI 코딩 도구(Copilot, opencode 등)는 **로컬 에디터와 연결**되어 동작합니다.  
+Jules는 **Google 클라우드 샌드박스**에서 GitHub 저장소를 직접 클론하여 실행됩니다.
 
 ```
-내가 잠자는 동안  ──┐
-내가 이동하는 동안 ──┼──▶ Jules는 클라우드에서 코드를 고치고 PR을 올린다
-내가 회의하는 동안 ──┘
+[기존 도구]
+내 PC → AI API 호출 → 코드 생성 → 내 에디터에 반영
+내 API 토큰 소비 / 내 PC 켜져 있어야 함
+
+[Jules]
+내 지시 → Google 클라우드 샌드박스 → 저장소 클론 → 코드 수정 → PR 생성
+Google 인프라 실행 / 내 PC 꺼져 있어도 됨 / 내 API 토큰 소비 없음
 ```
 
-**핵심 차이점 — 토큰이 내 지갑에서 나가지 않는다**
+---
+
+### 과금 구조 비교
 
 | 구분 | Copilot / opencode | Jules |
 |------|-------------------|-------|
-| 실행 위치 | 내 로컬 / 내 API 키 | Google 클라우드 |
-| 과금 방식 | 토큰 소비 (내 비용) | **건당 처리 (태스크 단위)** |
-| 컨텍스트 한계 | 에디터 열린 파일 위주 | **저장소 전체** |
-| 작업 중 내 PC 필요 | ✅ 필요 | ❌ 불필요 |
+| **API 키** | 내 계정 (OpenAI / Anthropic) | Google 부담 |
+| **과금 단위** | 입출력 토큰 수 | **태스크 건당** |
+| **긴 작업 시** | 토큰 비용 급증 | 비용 고정 |
+| **저장소 범위** | 에디터에 열린 파일 위주 | **저장소 전체** |
+| **내 PC 필요** | ✅ | ❌ |
+
+> **핵심**: Claude Opus 4.6이나 GPT Codex 5.3을 장시간 돌리면 토큰이 빠르게 소진됩니다.  
+> Jules는 **건당 처리**이므로 장시간 작업이 많을수록 비용 효율이 높아집니다.
 
 ---
 
-### 📈 Jules 모델 진화 — 인턴에서 주니어로
+### Jules 모델 진화 이력
 
-| 시기 | 모델 | 체감 수준 |
-|------|------|-----------|
-| 2025년 8월 (베타) | Gemini 2.5 Pro | 🧑‍💼 영리한 인턴 |
-| 2025년 11월 | Gemini 3 Pro | 🧑‍💻 숙련 인턴 |
-| **2026년 1월 30일** | **Gemini 3 Flash** | 🚀 **주니어 개발자** |
+| 시기 | 적용 모델 | 체감 수준 | 주요 변화 |
+|------|-----------|-----------|-----------|
+| 2025년 8월 (베타) | Gemini 2.5 Pro | 🧑‍💼 영리한 인턴 | 단순 버그 수정, 파일 1~2개 편집 |
+| 2025년 11월 | Gemini 3 Pro | 🧑‍💻 숙련 인턴 | 멀티 파일, 마이그레이션 작성 시작 |
+| **2026년 1월 30일** | **Gemini 3 Flash** | 🚀 **주니어 개발자** | 라우팅 구조 파악, Prisma + RLS 연동 PR |
 
----
-
-### 💬 Gemini 3 Flash 이후 체감 변화
-
-> **2026년 1월 30일**, Gemini 3 Flash가 **전체 사용자**에게 적용됐습니다.
-
-Claude Opus 4.6이나 GPT Codex 5.3 수준은 아닙니다.  
-하지만 **"Next.js 라우팅과 Prisma 스키마 전체를 파악하고 혼자서 PR을 올리는 주니어"** 정도는 됩니다.
-
-그리고 이 주니어는:
-- 🕐 24시간 일하고
-- 💰 월급이 없으며
-- 🔁 토큰을 내 계정에서 빼가지 않습니다
+> Claude Opus 4.6 / GPT Codex 5.3 수준은 아닙니다.  
+> 그러나 **"Next.js 라우팅 구조와 Prisma 스키마를 파악하고 혼자 PR을 올리는 주니어"** 수준은 됩니다.  
+> 그리고 이 주니어는 **24시간 일하고, 월급이 없으며, 내 토큰을 쓰지 않습니다.**
 
 ---
 
-### 🛠️ Jules CLI 설치 & 사용법
+### Jules CLI 주요 명령어
 
 ```bash
-# 설치
 npm install -g @google/jules
+jules login                              # Google 계정 인증
 
-# Google 계정 인증
-jules login
-
-# 연결된 저장소 확인
-jules remote list --repo
+jules remote list --repo                 # 연결된 저장소 확인
 
 # 작업 위임 (저장소 자동 감지)
 jules remote new --session "랭킹 페이지 UI 개선:
   1~3위에 금/은/동 배경색 적용
   /app/ranking/page.tsx 수정, Tailwind 사용"
 
-# 진행 중 세션 확인
-jules remote list --session
+jules remote list --session              # 진행 중인 세션 목록
+jules remote pull --session <id>         # 완료 코드 로컬 반영
 
-# 완료된 코드 로컬에 가져오기
-jules remote pull --session <session_id>
-
-# 병렬 작업 (최대 5개 동시)
+# 병렬 위임 (최대 5개 동시 실행)
 jules remote new --session "성능 최적화" --parallel 3
 ```
 
 ---
 
-### 🖥️ Jules TUI 대시보드
-
-```bash
-# 인터랙티브 대시보드 실행
-jules
-```
-
-- 세션 목록 / 상태 실시간 확인
-- Side-by-Side diff 뷰어
-- PR 링크 바로 열기
-
----
-
-### 📱 실제 모바일 사용 시나리오
+### 📱 이동 중 개발 시나리오 (실제 흐름)
 
 ```
-[출근길 지하철 — 스마트폰]
+[오전 9시 — 출근길 스마트폰]
 jules.google.com 접속
-→ "닉네임 컬럼 추가: Prisma 마이그레이션 + Profile 컴포넌트 업데이트"
-→ 작업 위임 완료, 폰 닫음
+→ "닉네임 컬럼 추가: Prisma migration + Profile 컴포넌트 업데이트"
+→ 위임 완료, 스마트폰 닫음
 
-[회의 중 — Jules가 클라우드에서 자동 처리]
-→ Prisma schema 수정 → migration 파일 생성
-→ Profile.tsx 업데이트 → PR #23 생성
-→ Vercel 프리뷰 자동 배포
+[Jules가 클라우드에서 자동 처리 — 약 15분]
+→ Prisma schema.prisma 수정
+→ migration 파일 자동 생성
+→ Profile.tsx 업데이트
+→ PR #23 생성 + Vercel 프리뷰 URL 첨부
 
-[점심시간 — 모바일 GitHub]
-→ PR diff 확인 → 프리뷰 URL로 UI 확인 → Merge
-→ Vercel 프로덕션 자동 배포 🚀
+[오전 9시 30분 — 회사 도착 전]
+→ GitHub 모바일에서 PR diff 확인
+→ Vercel 프리뷰 URL로 UI 확인
+→ Approve + Merge → 프로덕션 자동 배포 🚀
 ```
 
 ---
 
-### ⚙️ Jules 개인 활용 사례
+### 실제 활용 사례
 
-실제로 이렇게 써봤습니다:
-
-- 📦 **의존성 업그레이드**: 아침에 일어나면 PR이 올라와 있음
-  ```bash
-  jules remote new --session "모든 패키지 최신 버전으로 업그레이드하고 breaking change 수정"
-  ```
-- 🐛 **GitHub Issue → 자동 수정 PR**: 이슈에 `jules` 라벨만 붙이면 Jules가 읽고 PR 생성
-- 🧪 **테스트 일괄 생성**: 새로 만든 API route에 대한 테스트 파일 자동 생성
-- 🌙 **야간 스케줄**: Scheduled Task로 매주 월요일 새벽 `npm audit fix` 자동 실행
+| 사용 패턴 | 예시 Jules 세션 |
+|-----------|----------------|
+| **의존성 업그레이드** | "모든 패키지 최신 버전으로 업그레이드, breaking change 수정" |
+| **GitHub Issue 자동 처리** | 이슈에 `jules` 라벨 부착 → Jules가 읽고 PR 생성 |
+| **테스트 일괄 생성** | "src/app/api 하위 route 파일에 대한 테스트 파일 생성" |
+| **야간 보안 점검** | Scheduled Task — 매주 월요일 새벽 `npm audit fix` 자동 실행 |
 
 ---
 
-### 🔄 Jules Continuous AI
-
-Jules는 2025년 12월부터 **상시 가동** 패러다임을 도입했습니다:
+### Jules Continuous AI (2025년 12월~)
 
 | 기능 | 설명 |
 |------|------|
-| **Scheduled Tasks** | Cron 기반 정기 작업 (의존성 검사, 테스트 등) |
-| **Suggested Tasks** | `// TODO` 감지 → 자동 제안 |
-| **CI Fixer** | Jules PR의 CI 실패를 스스로 수정 후 재제출 |
-| **MCP 연동** | Supabase, Linear, Neon 직접 조작 |
-
-> 💡 **Key Takeaway**: Jules는 **"위임받은 작업을 끝까지 책임지는 주니어 개발자"**다.  
-> 토큰 비용 없이, 내가 자는 동안에도 PR을 올린다.
+| **Scheduled Tasks** | Cron 기반 정기 작업 (의존성 검사, lint 수정 등) |
+| **Suggested Tasks** | `// TODO` 주석 감지 후 자동 작업 제안 |
+| **CI Fixer** | Jules PR의 CI 실패를 스스로 분석하고 재제출 |
+| **MCP 연동** | Supabase, Linear, Neon 등 외부 서비스 직접 조작 |
 
 ---
 
-## ⚡ Step 6 — 넥스트 레벨: Cursor Automations (2026년 3월)
+## 🏢 Jules 패러다임을 사내에 적용한다면?
 
-> **"Jules가 시키면 하는 주니어라면, Cursor Automations는 알아서 움직이는 시니어다."**
+> **개인 프로젝트에서 검증된 이 구조를, 사내 개발팀 관점으로 바라봅니다.**
 
-### Jules vs Cursor Automations
+---
+
+### 금융권 개발 환경의 제약과 Jules 모델의 접점
+
+금융권(전자금융거래법, 망분리 규제)은 외부 AI 서비스에 코드를 직접 전송할 수 없습니다.  
+그러나 Jules의 **아키텍처 패턴** 자체는 사내에 구현 가능합니다.
+
+| Jules (외부) | 사내 구현 가능한 형태 |
+|--------------|----------------------|
+| Google 클라우드 샌드박스 | **사내망 내 격리 에이전트 서버** |
+| Gemini 모델 | **온프레미스 LLM** (Ollama, vLLM 등) |
+| GitHub 트리거 | **사내 GitLab / Bitbucket 웹훅** |
+| Vercel 프리뷰 | **사내 CD 파이프라인 (Jenkins / ArgoCD)** |
+| jules.google.com UI | **사내 에이전트 대시보드** |
+
+> 규제가 막는 것은 "외부 SaaS 사용"이지, **"비동기 AI 에이전트 패러다임"이 아닙니다.**
+
+---
+
+### 사내 AI 코딩 에이전트 아키텍처 (제안)
+
+```mermaid
+flowchart TD
+    A[개발자 지시\n사내 메신저 / 웹 UI] --> B[에이전트 오케스트레이터\n사내망 내 서버]
+    B --> C[온프레미스 LLM\nOllama / vLLM]
+    B --> D[사내 GitLab\n저장소 클론 & PR 생성]
+    D --> E[사내 CI/CD\nJenkins / ArgoCD]
+    E --> F[개발 / 스테이징 서버\n격리 환경 배포]
+    F --> G[개발자 검토\nPR diff + 프리뷰 URL]
+    G --> |Approve| H[운영 반영]
+```
+
+**핵심 원칙**: 모든 코드와 데이터는 사내망 안에서만 이동합니다.  
+LLM은 외부 API가 아닌 **온프레미스 모델**로 대체합니다.
+
+---
+
+### 사내 도입 시 기대 효과
+
+| 업무 패턴 | 현재 | AI 에이전트 적용 후 |
+|-----------|------|---------------------|
+| 반복 보일러플레이트 생성 | 개발자 직접 작성 (수시간) | 에이전트 위임 → PR 검토만 (30분) |
+| 레거시 코드 테스트 작성 | 일정에서 우선순위 밀림 | Cron 기반 야간 자동 생성 |
+| 의존성 보안 패치 | 분기별 수동 작업 | 주간 자동 PR + 담당자 알림 |
+| 코드 리뷰 1차 검토 | 시니어 리뷰어 시간 소비 | 에이전트 인라인 코멘트 선제공 |
+
+> **전금법 준수 + AI 효율화**는 상충 관계가 아닙니다.  
+> **"외부 SaaS를 쓰지 않으면서 같은 패러다임을 구현"하는 것이 핵심 설계 과제입니다.**
+
+---
+
+## ⚡ Step 6 — Cursor Automations: 이벤트 기반 상시 자동화
+
+> Jules가 "지시받으면 실행하는 주니어"라면,  
+> Cursor Automations는 "트리거가 발생하면 스스로 판단하고 움직이는 시니어"입니다.
+
+---
+
+### Jules vs Cursor Automations — 역할 분리
 
 | 구분 | Jules | Cursor Automations |
 |------|-------|-------------------|
-| 작동 방식 | 명령형 — 내가 지시해야 시작 | 이벤트 드리븐 — 트리거 발생 시 자동 |
-| 항상 켜져 있나? | ❌ 세션 단위 | ✅ 상시 가동 |
-| 비용 | 건당 처리 | Cloud Agent 사용량 |
-| 적합한 작업 | 기능 추가, 리팩토링 | 리뷰, 모니터링, 핫픽스 |
+| **작동 방식** | 명령형 — 개발자가 지시해야 시작 | 이벤트 드리븐 — 트리거 발생 시 자동 |
+| **상시 가동** | ❌ 세션 단위 | ✅ 항상 켜져 있음 |
+| **트리거** | 직접 CLI / 웹 입력 | GitHub, Slack, Linear, PagerDuty, Cron |
+| **적합한 작업** | 기능 추가, 리팩토링, 대규모 변경 | 리뷰 자동화, 모니터링, 핫픽스 |
+| **비용** | 건당 처리 | Cloud Agent 사용량 과금 |
 
 ---
 
-### 🔗 Cursor Automations 트리거 종류
+### Cursor Automations 트리거 구조
 
 ```mermaid
 flowchart LR
-    A[⏰ Schedule] --> Z[Cursor Cloud Agent]
-    B[🐙 GitHub PR/Push] --> Z
+    A[⏰ Schedule\nCron] --> Z[Cursor Cloud Agent]
+    B[🐙 GitHub\nPR 오픈 / Push / CI 실패] --> Z
     C[💬 Slack 메시지] --> Z
-    D[📋 Linear 이슈] --> Z
+    D[📋 Linear 이슈 생성] --> Z
     E[🚨 PagerDuty 인시던트] --> Z
     F[🔗 Webhook] --> Z
     Z --> G[핫픽스 PR 생성]
-    Z --> H[Slack 알림]
-    Z --> I[PR 코드 리뷰]
+    Z --> H[Slack 알림 발송]
+    Z --> I[PR 인라인 코드 리뷰]
+    Z --> J[MCP 도구 실행]
 ```
+
+> **Memories 기능**: Cloud Agent가 이전 작업 컨텍스트를 기억합니다.  
+> "같은 설명을 반복하는" 비용 없이, 프로젝트 맥락이 누적됩니다.
 
 ---
 
-### 🎬 활용 시나리오
+### 실용 시나리오 3가지
 
-**① Vercel 빌드 에러 자동 수정**
+**① Vercel 빌드 실패 → 자동 핫픽스**
 ```
-Vercel 빌드 실패 → Webhook 트리거
-→ Cloud Agent: 에러 로그 분석 → 핫픽스 코드 작성
-→ PR 생성 + Slack 알림 → 모바일로 리뷰 → Merge ✅
-```
-
-**② PR 자동 보안 리뷰**
-```
-feature/* PR 오픈 → GitHub 트리거
-→ Agent: diff 분석 → RLS 누락, SQL Injection 검사
-→ PR 인라인 코멘트 자동 작성
+Vercel 빌드 실패 → Webhook 트리거 → Cloud Agent
+→ 에러 로그 + diff 분석 → 원인 코드 수정
+→ 핫픽스 PR 생성 + Slack 알림 → 개발자 모바일 승인 → Merge ✅
 ```
 
-**③ 매일 새벽 테스트 커버리지**
+**② PR 오픈 → 자동 보안 리뷰**
+```
+feature/* PR 오픈 → GitHub 트리거 → Cloud Agent
+→ diff 분석 → RLS 누락, SQL Injection 패턴 검사
+→ PR 인라인 코멘트 자동 작성 (시니어 리뷰 전 선제 검토)
+```
+
+**③ 매일 새벽 → 테스트 커버리지 확장**
 ```
 Cron (매일 03:00) → 테스트 없는 함수 탐지
 → 테스트 코드 작성 → PR 생성
-→ 아침에 일어나면 테스트 PR이 기다림 ☕
+→ 아침 출근 시 테스트 PR 대기 ☕
 ```
 
 ---
 
 ## 🎯 마무리 — 도구 매트릭스
 
-| 상황 | 도구 | 나의 역할 |
-|------|------|-----------|
-| 초기 설계 | **OpenSpec** | 아키텍처 설계자 |
-| 풀스택 구축 | **Next.js + Prisma + Supabase** | 스택 조합자 |
-| CI/CD | **Vercel CLI** | 파이프라인 설계자 |
-| 로컬 코딩 | **opencode / Copilot Agent** | 리뷰어 |
-| 이동 중 | **Jules** | 작업 위임자 |
-| 상시 자동화 | **Cursor Automations** | 시스템 설계자 |
+| 상황 | 도구 | 역할 |
+|------|------|------|
+| **초기 설계** | OpenSpec | 아키텍처 + AI 컨텍스트 설계 |
+| **풀스택 구축** | Next.js + Prisma + Supabase | 스택 조합 및 RLS 보안 레이어 |
+| **CI/CD** | Vercel CLI | 환경 변수 동기화 + 브랜치별 자동 배포 |
+| **로컬 코딩** | opencode / Copilot Agent | 동기 멀티 파일 생성 |
+| **이동 중 / 비동기** | Jules | 클라우드 위임 실행, 토큰 비용 없음 |
+| **상시 자동화** | Cursor Automations | 이벤트 기반 항시 실행 |
 
 ---
 
-### 💡 1인 개발자의 새로운 정의
+### 패러다임 전환 요약
 
-- **과거**: 코드를 직접 타이핑하는 사람
-- **현재**: AI 에이전트에게 올바른 지시를 내리는 사람
-- **미래**: 에이전트들이 24시간 돌아가는 **시스템을 설계**하는 사람
+```
+[이전]
+개발자 → 에디터에서 코드 작성 → 커밋 → 배포
 
-> **"미래의 1인 개발은 타자 속도가 아니라,**  
-> **에이전트가 쉬지 않고 일할 수 있도록**  
-> **트리거와 PR 파이프라인을 설계하는 오케스트레이션 능력에 달려 있다."**
+[현재]
+개발자 → AI 에이전트에게 지시 → 에이전트가 PR 생성 → 개발자가 검토 후 Merge → 자동 배포
+
+[다음 단계]
+트리거 발생 → 에이전트가 자동 판단 → PR 생성 → 개발자가 Approve만
+```
+
+> 개발자의 역할이 "코드를 타이핑하는 사람"에서  
+> **"에이전트가 올바르게 동작하도록 컨텍스트와 트리거를 설계하는 사람"으로 이동하고 있습니다.**
 
 ---
 
 ## 🎮 실시간 시연 — 독박게임
 
-이 모든 워크플로우로 실제로 만들고 운영 중인 프로젝트입니다.
+이 워크플로우로 실제로 만들고 운영 중인 프로젝트입니다.
 
 **👉 [dokbakgame.vercel.app](https://dokbakgame.vercel.app)**
 
-- Next.js App Router + Prisma + Supabase
-- Vercel 자동 배포
-- Jules로 이동 중 기능 추가
-- Copilot Agent로 DB 마이그레이션 자동화
+- Next.js App Router + Prisma + Supabase (PostgreSQL + RLS)
+- Vercel 브랜치별 자동 배포
+- Jules로 이동 중 기능 위임 → PR → Merge 흐름 실사용
+- Copilot Agent로 DB 마이그레이션 + RLS 자동화
 
-### 지금 바로 Jules로 실시간 수정을 시연합니다 🚀
+### 지금 Jules로 실시간 변경을 시연합니다 🚀
 
 ```bash
 jules remote new --session "..."
@@ -470,11 +514,11 @@ jules remote new --session "..."
 | 도구 | 링크 |
 |------|------|
 | Jules 공식 문서 | [jules.google/docs](https://jules.google/docs) |
-| Jules CLI 레퍼런스 | [jules.google/docs/cli/reference](https://jules.google/docs/cli/reference) |
 | Jules Changelog | [jules.google/docs/changelog](https://jules.google/docs/changelog) |
-| Cursor Automations | [cursor.com/docs/cloud-agent/automations](https://cursor.com/docs/cloud-agent/automations) |
+| Cursor Automations 문서 | [cursor.com/docs/cloud-agent/automations](https://cursor.com/docs/cloud-agent/automations) |
 | OpenSpec | [openspec.dev](https://openspec.dev) |
+| Supabase RLS 가이드 | [supabase.com/docs/guides/database/postgres/row-level-security](https://supabase.com/docs/guides/database/postgres/row-level-security) |
+| Prisma Connection Pooling | [prisma.io/docs/guides/performance-and-optimization/connection-management](https://www.prisma.io/docs/guides/performance-and-optimization/connection-management) |
 | Vercel 배포 가이드 | [vercel.com/docs](https://vercel.com/docs) |
-| Supabase RLS 문서 | [supabase.com/docs/guides/database/postgres/row-level-security](https://supabase.com/docs/guides/database/postgres/row-level-security) |
 
-✨ **감사합니다!** ✨
+✨ **감사합니다. 질문 환영합니다.** ✨
