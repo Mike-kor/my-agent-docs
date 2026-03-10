@@ -160,7 +160,20 @@ rls:insert=own select=public
 > | **Vercel Postgres** | Vercel 대시보드 통합 관리 | 간단한 프로젝트, 인프라 최소화 목표 시 |
 >
 > 이 예시에서는 **RLS 기반 행 단위 보안 정책**이 필요해 Supabase를 선택했습니다.
-
+> **화상해서 보기 — RLS(Row Level Security)란?**  
+> PostgreSQL의 기능으로, 테이블의 **각 행(row)에 대한 접근 권한을 DB 자체가 제어**합니다.  
+> 일반적인 권한 관리는 개발자가 API 코드에서 `WHERE user_id = :me` 같은 필터를 직접 작성합니다.  
+> RLS는 이 필터를 **DB 정송으로 미리 설정**해 두므로, API에서 실수로 빠뜨도 DB가 차단합니다.
+>
+> ```
+> 기존 방식 (API 방어)
+> Client → API Route → [WHERE user_id = me 필터 작성] → DB
+>           ↑ 여기를 빴으면 다른 사람의 데이터 노출
+>
+> RLS 방식 (DB 방어)
+> Client → API Route → DB → [Policy: auth.uid() = user_id 자동 적용]
+>                             ↑ API에 필터 없어도 DB가 차단
+> ```
 ---
 
 ### Prisma 스키마 및 Connection Pooling 설정
@@ -282,8 +295,16 @@ vercel --prod                  # 프로덕션 즉시 배포
 
 ### 🔐 Supabase RLS 정책 — 보안 설계 관점
 
-RLS(Row Level Security)는 DB 레이어에서 행 단위 접근을 제어합니다.  
-**API에서 필터를 빠뜨려도 DB가 차단**하므로, 보안 계층이 중복됩니다.
+**RLS(Row Level Security)**는 PostgreSQL의 네이티브 기능으로,  
+**테이블 순위가 아닌 행(row) 순위로** 접근 권한을 제어합니다.  
+개발자가 API에 `WHERE` 필터를 작성하는 대신, DB가 스스로 보안 정송을 적용하므로  
+**API 코드에서 필터를 빰뜨도 DB가 차단**하는 이중 보안 계층이 형성됩니다.
+
+| | 기존 API 방어 | RLS 방어 |
+|---|---|---|
+| **제어 위치** | API 코드 (`WHERE user_id = me`) | DB 정송 (Policy) |
+| **실수 가능성** | 필터 누락 시 데이터 노출 | 필터 없어도 DB가 자동 차단 |
+| **보안 감사** | 코드 리뷰 필요 | SQL Policy 확인으로 충분 |
 
 ```sql
 -- 인증된 사용자만 자신의 점수를 INSERT 가능
