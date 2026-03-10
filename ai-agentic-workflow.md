@@ -74,10 +74,12 @@ openspec validate add-user-score --strict   # 요구 명세 검증
 
 ```markdown
 ## Tech Stack
-- Framework: Next.js 14 (App Router, Server Components 우선)
-- ORM: Prisma (migration 파일로 변경 이력 관리)
+- Framework: Next.js 16 (App Router, Server Components 우선)
+- Runtime: React 19
+- ORM: Prisma 7 (migration 파일로 변경 이력 관리)
+- DB Driver: @prisma/adapter-pg (pg 직접 연결)
 - Database: Supabase (PostgreSQL + RLS)
-- Auth: Supabase Auth (Google OAuth)
+- Auth: next-auth v5 beta (@auth/prisma-adapter)
 - Deploy: Vercel (main → production, feature/* → preview)
 
 ## Conventions
@@ -110,8 +112,8 @@ ORM으로는 Prisma를 사용하고 있으며, 마이그레이션
 **After — 압축 영문형 (토큰 최소화)**
 ```markdown
 ## stack
-fw:next14-approuter sc-first; orm:prisma migration-files;
-db:supabase-pg rls-enabled; auth:supabase google-oauth;
+fw:next16-approuter sc-first react19; orm:prisma7 adapter-pg;
+db:supabase-pg rls-enabled; auth:next-auth-v5 prisma-adapter;
 deploy:vercel main=prod feature/*=preview
 
 ## conventions
@@ -138,12 +140,13 @@ rls:insert=own select=public
 
 ### 스택 선택 근거
 
-| 레이어 | 선택 | 이유 |
-|--------|------|------|
-| **프레임워크** | Next.js 14 App Router | Server Component로 API/렌더링 통합, Vercel 네이티브 |
-| **ORM** | Prisma | 타입 안전 쿼리, migration 파일로 스키마 변경 이력 관리 |
-| **DB** | Supabase (PostgreSQL) | RLS로 행 단위 접근 제어, 무료 플랜에서 실운용 가능 |
-| **인증** | Supabase Auth | OAuth 제공자 내장, JWT 자동 관리 |
+| 레이어 | 선택 | 버전 | 이유 |
+|--------|------|------|------|
+| **프레임워크** | Next.js App Router | **16.0.8** | Server Component로 API/렌더링 통합, Vercel 네이티브 |
+| **런타임** | React | **19.2** | 동시성 렌더링, Server Actions 안정화 |
+| **ORM** | Prisma + adapter-pg | **7.0** | 타입 안전 쿼리, pg 드라이버 직접 연결로 Edge 호환 |
+| **DB** | Supabase (PostgreSQL) | — | RLS로 행 단위 접근 제어, 무료 플랜에서 실운용 가능 |
+| **인증** | next-auth v5 beta | **5.0.0-beta** | App Router 네이티브, @auth/prisma-adapter로 세션 DB 저장 |
 
 > 📌 **Vercel은 Supabase 외에도 다양한 DB를 공식 통합으로 지원합니다.**  
 > 프로젝트 요건에 따라 아래 중 선택할 수 있으며, 모두 `vercel env pull`로 연결 문자열이 자동 주입됩니다.
@@ -194,6 +197,29 @@ npx prisma migrate dev --name add-game-score
 # Prisma Studio (로컬 데이터 확인)
 npx prisma studio
 ```
+
+---
+
+### 📦 이 프로젝트에서 실제로 쓰는 주요 패키지
+
+> `package.json`에서 역할별로 뽑은 핵심 의존성입니다.  
+> AI 에이전트에게 컨텍스트를 줄 때 **어떤 라이브러리가 이미 있는지** 알려주면 불필요한 대안 제안을 막을 수 있습니다.
+
+| 카테고리 | 패키지 | 역할 |
+|----------|--------|------|
+| **인증** | `next-auth@5 beta` + `@auth/prisma-adapter` | App Router 세션 관리, Prisma로 사용자/세션 DB 저장 |
+| **상태 관리** | `zustand` | 전역 클라이언트 상태 (게임 진행, UI 상태) |
+| **애니메이션** | `framer-motion` | 페이지 전환, 결과 화면 연출 |
+| **게임 엔진** | `phaser` + `excalibur` | 2D 게임 로직 (캔버스 렌더링) |
+| **3D 렌더링** | `three` + `@react-three/fiber` + `@react-three/drei` | Three.js를 React 컴포넌트로 선언적 사용 |
+| **차트** | `recharts` | 점수 추이, 랭킹 시각화 |
+| **AI 연동** | `openai` | 게임 내 AI 힌트 / 결과 코멘트 생성 |
+| **실시간** | `socket.io-client` | 멀티플레이어 이벤트 수신 |
+| **날짜** | `date-fns` | 점수 기록 타임스탬프 포맷 |
+
+> 💡 **Copilot / Jules에게 넘길 때 팁**:  
+> `package.json`을 컨텍스트에 포함하면 에이전트가 "zustand를 쓰니까 Context API 대신 store를 만들어야겠다"처럼  
+> **이미 있는 스택을 활용하는 코드**를 생성합니다.
 
 ---
 
