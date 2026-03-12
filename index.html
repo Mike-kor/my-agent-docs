@@ -579,20 +579,20 @@ rls:insert=own select=public</code></pre>
         <tbody>
           <tr><td>프레임워크</td><td><strong>Next.js 16 App Router</strong></td><td>Server Component로 프론트·API를 같은 코드베이스에서 처리. Vercel 네이티브 배포</td></tr>
           <tr><td>ORM</td><td><strong>Prisma</strong></td><td>schema.prisma 파일 하나로 DB 구조·타입·마이그레이션 이력을 통합 관리. AI가 스키마만 보고 전체 DB 구조를 파악 가능</td></tr>
-          <tr><td>DB</td><td><strong>Supabase (PostgreSQL)</strong></td><td>RLS(Row Level Security)로 DB 레이어에서 행 단위 접근 제어. API에서 실수로 필터를 빠뜨려도 DB가 차단</td></tr>
-          <tr><td>인증</td><td><strong>Supabase Auth</strong></td><td>Google OAuth 내장, JWT 자동 관리. auth.uid()가 RLS 정책과 직접 연결</td></tr>
+          <tr><td>DB</td><td><strong>Supabase (PostgreSQL)</strong></td><td>한국 리전(ap-northeast-2) 지원 + RLS로 DB 레이어 행 단위 보안. Vercel과 네이티브 통합, Free 플랜으로 토이 프로젝트 실운용 가능</td></tr>
+          <tr><td>인증</td><td><strong>next-auth v5</strong></td><td>Google / GitHub OAuth 내장, JWT·세션 자동 관리. 공식 Prisma Adapter로 세션 테이블 자동 생성</td></tr>
         </tbody>
       </table>
     </div>
 
     <h3>Vercel이 지원하는 DB 옵션</h3>
-    <p>모두 <code>vercel env pull</code> 한 줄로 연결 문자열이 로컬에 자동 동기화됩니다. 이 프로젝트는 RLS 기반 보안 정책이 필요해 Supabase를 선택했습니다.</p>
+    <p>모두 <code>vercel env pull</code> 한 줄로 연결 문자열이 로컬에 자동 동기화됩니다. 각 DB는 요건에 따라 선택하면 됩니다.</p>
     <div class="table-wrap">
       <table>
         <thead><tr><th>DB</th><th>특징</th><th>적합한 경우</th></tr></thead>
         <tbody>
-          <tr><td><strong>Supabase</strong></td><td>PostgreSQL + RLS + Auth 내장</td><td>인증·보안 정책이 중요한 앱</td></tr>
-          <tr><td><strong>Neon</strong></td><td>서버리스 PostgreSQL, 브랜치별 DB 스냅샷</td><td>PR 환경마다 독립 DB를 쓰고 싶을 때</td></tr>
+          <tr><td><strong>Supabase ★</strong></td><td>PostgreSQL + RLS + Auth 내장. <strong>한국 리전(ap-northeast-2) 지원</strong>, Free 플랜 500MB·월 2GB 트래픽</td><td>국내 레이턴시가 중요한 앱, 토이 프로젝트 무비용 운용</td></tr>
+          <tr><td><strong>Neon</strong></td><td>서버리스 PostgreSQL, 브랜치별 DB 스냅샷. 한국 리전 미지원(도쿄 최근접)</td><td>PR 환경마다 독립 DB를 쓰고 싶을 때</td></tr>
           <tr><td><strong>PlanetScale</strong></td><td>MySQL 호환, 무중단 스키마 변경</td><td>대규모 트래픽, zero-downtime 마이그레이션</td></tr>
           <tr><td><strong>Upstash</strong></td><td>서버리스 Redis / Kafka</td><td>세션 캐시, 큐, 실시간 카운터</td></tr>
         </tbody>
@@ -636,6 +636,25 @@ model GameScore {
 
     <div class="callout info">
       <p>이 방식의 핵심은 <strong>"보안 신경 써"라고 매번 지시하지 않아도 된다</strong>는 점입니다. <code>project.md</code>에 RLS 정책이 명시되어 있으면 에이전트가 항상 포함시킵니다.</p>
+    </div>
+
+    <h3>Free 플랜으로 토이 프로젝트를 돌리면 얼마나 버티나</h3>
+    <p>이 스택의 가장 큰 장점 중 하나는 <strong>서비스가 작을 때는 실질적으로 무료</strong>라는 점입니다. 독박게임은 현재 Vercel Hobby + Supabase Free 조합으로 운영비 0원을 유지하고 있습니다.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>서비스</th><th>Free 플랜 한도</th><th>실제 체감</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Vercel Hobby</strong></td><td>월 100GB 대역폭, Serverless Function 무제한 호출</td><td>수천 DAU 이하에서는 한도 초과 경험 없음</td></tr>
+          <tr><td><strong>Supabase Free</strong></td><td>DB 500MB, 월 2GB 트래픽, 50,000 MAU Auth</td><td>토이 프로젝트·사내 데모 수준이면 충분. 7일 비활성 시 프로젝트 일시 중지 주의</td></tr>
+          <tr><td><strong>GitHub</strong></td><td>Public 저장소 무제한, Actions 월 2,000분</td><td>Jules PR + 기본 CI는 무료 범위 내 처리</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout warn">
+      <div class="callout-label">Free 플랜 주요 제약</div>
+      <p>Supabase Free는 <strong>7일간 요청이 없으면 프로젝트가 일시 중지</strong>됩니다. 첫 요청에 cold-start 지연(수 초)이 발생하므로 데모·발표 전날 한 번 접속해두는 게 좋습니다. 트래픽이 늘어나면 Supabase Pro($25/월) + Vercel Pro($20/월) 구간으로 올리면 됩니다. 그 전까지는 실질적으로 <strong>월 $0 풀스택 서비스</strong>입니다.</p>
     </div>
   </section>
 
