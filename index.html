@@ -488,7 +488,7 @@
   <section id="background">
     <span class="section-number">01</span>
     <h2>배경 — 개발자 1인의 세 가지 병목</h2>
-    <p>업무에서는 프론트엔드만 담당하지만, 사이드 프로젝트는 DB 설계부터 배포까지 혼자 처리해야 합니다. 반복적으로 막히는 지점 세 가지가 있었고, 각각 다른 방식으로 해소했습니다.</p>
+    <p><strong>1인 개발자가 팀 수준의 속도를 내려면 어디서 시간이 새는지를 먼저 알아야 합니다.</strong> 세 가지 병목을 찾았고, 각각 비용·시간·지식 문제였습니다. AI 도구 조합으로 이 세 가지를 동시에 해결한 방법을 설명합니다.</p>
 
     <div class="table-wrap">
       <table>
@@ -523,7 +523,7 @@
   <section id="context">
     <span class="section-number">02</span>
     <h2>AI 컨텍스트 설계 — OpenSpec</h2>
-    <p>여러 AI 도구를 같은 프로젝트에서 쓸 때 가장 큰 낭비는 <strong>매번 "이 프로젝트가 어떤 프로젝트인지" 설명을 반복하는 것</strong>입니다. OpenSpec은 프로젝트의 스택·컨벤션·도메인 용어를 구조화된 문서로 미리 정의해두고, 모든 AI 에이전트가 공통으로 참조하게 합니다.</p>
+    <p><strong>AI 도구를 여러 개 쓸수록 "이 프로젝트가 뭔지" 반복 설명에 드는 비용이 선형으로 늘어납니다.</strong> OpenSpec은 프로젝트 맥락을 단 한 번만 정의하면 Copilot·Jules·Cursor 등 모든 에이전트가 동일한 사전 지식을 갖고 시작하게 만드는 컨텍스트 설계 방식입니다. 도구가 늘어날수록 효율이 배가 됩니다.</p>
 
     <div class="def-grid">
       <div class="def-item">
@@ -570,7 +570,7 @@ rls:insert=own select=public</code></pre>
   <section id="stack">
     <span class="section-number">03</span>
     <h2>풀스택 구현 — Next.js + Prisma + Supabase</h2>
-    <p>프론트엔드 개발자가 백엔드·DB까지 혼자 운영하기 위한 스택입니다. 각 레이어가 서로 타입을 공유하고, AI 에이전트가 전체 구조를 한 번에 파악할 수 있도록 단순하게 구성했습니다.</p>
+    <p><strong>백엔드 전담 인력 없이 프론트엔드 개발자가 DB 설계부터 보안 정책까지 직접 운영하는 구조입니다.</strong> 핵심은 스택 전체가 타입으로 연결된다는 점입니다. AI 에이전트가 하나의 파일(<code>schema.prisma</code>)만 읽으면 DB·API·화면까지 전체 구조를 파악하고, 변경이 필요한 모든 레이어를 한 번에 수정합니다.</p>
 
     <h3>스택 선택 근거</h3>
     <div class="table-wrap">
@@ -734,7 +734,7 @@ flowchart TD
   <section id="deploy">
     <span class="section-number">04</span>
     <h2>배포 파이프라인 — Vercel</h2>
-    <p>Vercel은 GitHub 저장소와 연결하면 브랜치 전략이 곧 배포 전략이 됩니다. 별도 CI 설정 없이 PR 하나만 올려도 프리뷰 환경이 자동으로 만들어집니다.</p>
+    <p><strong>DevOps 담당자 없이 개발자가 PR 하나로 스테이징·프로덕션 배포를 완결하는 구조입니다.</strong> CI 파이프라인 설정, 환경 변수 관리, 스테이징 서버 구축 — 이 모든 것을 Vercel 하나가 대체합니다. Jules가 PR을 올리는 순간 테스트 가능한 프리뷰 URL이 자동으로 생성되어, 모바일에서 검토 후 승인만 하면 프로덕션까지 도달합니다.</p>
 
     <h3>브랜치 → 배포 환경 자동 매핑</h3>
     <div class="table-wrap">
@@ -794,7 +794,7 @@ flowchart LR
   <section id="async">
     <span class="section-number">05</span>
     <h2>비동기 AI 에이전트 — Google Jules 시연</h2>
-    <p>지금까지 설명한 스택 위에서, <strong>노트북 없이 출근길에 기능을 배포하는 흐름</strong>을 실제로 보여드립니다.</p>
+    <p><strong>개발자가 자리를 비운 시간도 개발 시간이 됩니다.</strong> Jules는 지시만 하면 Google 클라우드에서 코드를 직접 수정하고 PR을 올려놓습니다. 개발자는 출근길 스마트폰으로 결과를 검토하고 Approve만 누르면 됩니다. 야근 없이, PC 없이, 비용 추가 없이 개발 사이클이 돌아가는 방식을 지금 바로 시연합니다.</p>
 
     <h3>기존 AI 도구와 Jules의 차이</h3>
     <div class="table-wrap">
@@ -856,8 +856,7 @@ flowchart LR
   <section id="inhouse">
     <span class="section-number">06</span>
     <h2>사내 적용 가능성 — 금융권 관점</h2>
-    <p>지금까지 보여드린 방식은 모두 외부 SaaS 기반입니다. 그렇다면 전자금융거래법·망분리 규제가 있는 금융권에서는 어떻게 할 수 있을까요?</p>
-    <p>규제가 막는 것은 <strong>"외부 서비스에 코드를 전송하는 행위"</strong>이지, 비동기 AI 에이전트 구조 자체가 아닙니다. Jules의 아키텍처는 사내망 안에서 동일하게 구현할 수 있습니다.</p>
+    <p><strong>지금 보여드린 이 모든 구조는 사내망 안에서도 동일하게 작동할 수 있습니다.</strong> 전자금융거래법이 막는 것은 "외부 서버에 코드를 올리는 행위"이지, 비동기 AI 에이전트 패턴 자체가 아닙니다. Jules의 역할을 하는 에이전트 서버를 사내망에 두고, Gemini 대신 온프레미스 LLM을 연결하면 됩니다. <strong>코드는 사내망 밖으로 한 줄도 나가지 않으면서</strong>, 오늘 본 개발 효율을 그대로 가져갈 수 있습니다.</p>
 
     <h3>외부 → 사내 대체 매핑</h3>
     <div class="table-wrap">
@@ -925,7 +924,7 @@ flowchart TD
   <section id="demo">
     <span class="section-number">07</span>
     <h2>실증 사례 — 독박게임</h2>
-    <p>이 워크플로우를 실제로 적용해 운영 중인 프로젝트입니다. 기획·개발·배포를 1인이 처리하면서 AI 에이전트를 통해 사실상 팀 개발 수준의 속도를 유지하고 있습니다.</p>
+    <p><strong>지금까지 설명한 워크플로우를 실제로 혼자 운영하고 있는 서비스입니다.</strong> 기획부터 DB 설계·배포·운영까지 1인 체제로, 운영 비용은 월 $0입니다. AI 에이전트 없이는 불가능한 규모와 속도입니다. 개념이 아닌 실물로 확인할 수 있습니다.</p>
 
     <div class="img-wrap">
       <img src="22kBv.png" alt="독박게임 QR 코드" />
@@ -950,7 +949,7 @@ flowchart TD
   <section id="matrix">
     <span class="section-number">08</span>
     <h2>도구 선택 가이드</h2>
-    <p>상황과 목적에 따라 적합한 도구가 다릅니다.</p>
+    <p><strong>도구는 한꺼번에 도입할 필요가 없습니다.</strong> 각 도구는 독립적으로 시작할 수 있고, 연결할수록 자동화 범위가 넓어집니다. 팀 상황과 우선순위에 따라 어디서부터 시작할지 판단할 수 있도록 정리했습니다.</p>
 
     <div class="table-wrap">
       <table>
@@ -970,6 +969,7 @@ flowchart TD
   <section id="refs">
     <span class="section-number">09</span>
     <h2>참고 자료</h2>
+    <p>본 자료에서 언급한 각 도구의 공식 문서 링크입니다. 추가 검토나 사내 파일럿 준비 시 참고할 수 있습니다.</p>
     <div class="table-wrap">
       <table>
         <thead><tr><th>항목</th><th>링크</th></tr></thead>
