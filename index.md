@@ -625,6 +625,73 @@ model GameScore {
       <p>Vercel 서버리스는 요청마다 새 DB 커넥션을 만듭니다. PgBouncer(Supabase 내장)가 커넥션을 재사용해 DB 연결 한도 초과를 방지합니다. <code>DATABASE_URL</code>은 PgBouncer 경유, <code>DIRECT_URL</code>은 migration 전용으로 분리합니다.</p>
     </div>
 
+    <h3>schema.prisma → Supabase → API → 화면까지 한 번에 이어지는 개발 사이클</h3>
+    <p>이 스택에서 "새 데이터를 추가해줘"라고 AI에게 요청하면 일어나는 일을 단계별로 따라가 봅니다. 각 단계가 자동으로 연결되기 때문에 <strong>개발자는 지시 한 번으로 DB부터 화면까지 한꺼번에 완성된 결과물</strong>을 받을 수 있습니다.</p>
+
+    <div class="diagram-wrap">
+      <div class="diagram-toolbar">
+        <span>diagram / ai-dev-cycle</span>
+        <div class="diagram-controls">
+          <button class="diagram-btn" onclick="zoomDiagram(this,-0.2)">&#8722;</button>
+          <button class="diagram-btn" onclick="zoomDiagram(this,0)">reset</button>
+          <button class="diagram-btn" onclick="zoomDiagram(this,0.2)">&#43;</button>
+          <button class="diagram-btn" onclick="expandDiagram(this)">expand</button>
+        </div>
+      </div>
+      <div class="diagram-container" data-scale="1">
+        <pre class="mermaid">
+flowchart TD
+    P[개발자 지시\n"랭킹에 닉네임 컬럼 추가해줘"] --> A
+    A["① schema.prisma 분석\nAI가 현재 DB 구조 파악"] --> B
+    B{"컬럼 변경 필요?"} -->|Yes| C
+    C["② DDL 실행\n(prisma db push)\nSupabase 실제 DB에 테이블 변경 반영"] --> D
+    D["③ Migration 파일 생성\n(prisma migrate dev)\n변경 이력을 코드로 기록"] --> E
+    B -->|No| E
+    E["④ API Route 수정\n(app/api/scores/route.ts)\n새 컬럼 포함한 백엔드 로직"] --> F
+    F["⑤ React Hook 자동 연결\n(useQuery / SWR)\n프론트엔드가 새 데이터를 자동 수신"] --> G
+    G["화면에 닉네임 표시 완료 ✓"]
+        </pre>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>단계</th><th>실제로 일어나는 일</th><th>담당</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><strong>① 스키마 분석</strong></td>
+            <td>AI가 <code>schema.prisma</code>를 읽어 현재 DB 구조를 파악. 추가가 필요한 컬럼·테이블을 스스로 결정</td>
+            <td>AI 자동</td>
+          </tr>
+          <tr>
+            <td><strong>② DB 변경 반영</strong></td>
+            <td><code>prisma db push</code> 한 줄로 Supabase 실제 DB에 컬럼이 생성됨. SQL을 직접 작성할 필요 없음</td>
+            <td>Prisma 자동</td>
+          </tr>
+          <tr>
+            <td><strong>③ 변경 이력 기록</strong></td>
+            <td><code>prisma migrate dev</code>로 이번 변경이 migration 파일로 저장됨. 팀원이 같은 명령어 하나로 동일한 DB 상태를 재현 가능</td>
+            <td>Prisma 자동</td>
+          </tr>
+          <tr>
+            <td><strong>④ 백엔드 API 업데이트</strong></td>
+            <td>AI가 새 컬럼을 반환하는 API Route를 수정. Prisma가 타입을 자동 생성하므로 오탈자·형변환 오류가 원천 차단</td>
+            <td>AI 자동</td>
+          </tr>
+          <tr>
+            <td><strong>⑤ 프론트엔드 자동 연결</strong></td>
+            <td>Next.js의 Server Component 또는 React Hook(<code>useQuery</code>)이 업데이트된 API를 호출해 새 데이터가 화면에 즉시 반영</td>
+            <td>AI 자동</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout info">
+      <div class="callout-label">이게 왜 중요한가</div>
+      <p>기존 방식이라면 DB 담당자가 DDL을 짜고, 백엔드 개발자가 API를 수정하고, 프론트엔드 개발자가 화면을 바꾸는 <strong>3명이 순서를 맞춰 협업</strong>해야 했습니다. 이 스택에서는 AI에게 한 번 지시하면 <code>schema.prisma</code>가 모든 레이어의 단일 진실 공급원(Single Source of Truth) 역할을 하기 때문에 <strong>1인이 전체 사이클을 한 번에</strong> 완결할 수 있습니다.</p>
+    </div>
+
     <h3>Copilot Agent — 멀티 파일 한 번에 생성</h3>
     <p>에디터에서 직접 코딩할 때는 Copilot Agent를 씁니다. <code>project.md</code>를 컨텍스트로 주면, 프롬프트 하나로 프론트·DB·보안·API를 동시에 뽑아냅니다.</p>
 
