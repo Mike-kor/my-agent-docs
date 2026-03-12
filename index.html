@@ -641,15 +641,20 @@ model GameScore {
       <div class="diagram-container" data-scale="1">
         <pre class="mermaid">
 flowchart TD
-    P[개발자 지시\n"랭킹에 닉네임 컬럼 추가해줘"] --> A
-    A["① schema.prisma 분석\nAI가 현재 DB 구조 파악"] --> B
-    B{"컬럼 변경 필요?"} -->|Yes| C
-    C["② DDL 실행\n(prisma db push)\nSupabase 실제 DB에 테이블 변경 반영"] --> D
-    D["③ Migration 파일 생성\n(prisma migrate dev)\n변경 이력을 코드로 기록"] --> E
+    P([fa:fa-comment 개발자 지시]) --> A
+    A[1 schema.prisma 분석] --> B
+    B{컬럼 변경 필요?}
+    B -->|Yes| C
     B -->|No| E
-    E["④ API Route 수정\n(app/api/scores/route.ts)\n새 컬럼 포함한 백엔드 로직"] --> F
-    F["⑤ React Hook 자동 연결\n(useQuery / SWR)\n프론트엔드가 새 데이터를 자동 수신"] --> G
-    G["화면에 닉네임 표시 완료 ✓"]
+    C[2 DDL 실행 prisma db push] --> D
+    D[3 Migration 파일 생성] --> E
+    E[4 API Route 수정] --> F
+    F[5 React Hook 연결] --> G
+    G([fa:fa-check 화면 반영 완료])
+
+    style P fill:#edf2ff,stroke:#3b5bdb,color:#3b5bdb
+    style G fill:#ebfbee,stroke:#2f9e44,color:#2f9e44
+    style B fill:#fff9db,stroke:#e67700
         </pre>
       </div>
     </div>
