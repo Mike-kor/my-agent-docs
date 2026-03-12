@@ -459,11 +459,10 @@
 <div class="page">
 
   <header class="doc-header">
-    <div class="doc-label">Knowledge Sharing / Internal Tech Talk</div>
+    <div class="doc-label">Knowledge Sharing</div>
     <h1>AI 에이전트 기반 풀스택 개발 워크플로우</h1>
-    <p>개인 프로젝트에서 쓰는 AI 코딩 워크플로우를 정리했습니다. 외부 SaaS 기반이지만, 사내 환경에 적용할 수 있는 부분도 같이 다룹니다.</p>
+    <p>사이드 프로젝트 하면서 쓰게 된 AI 코딩 워크플로우입니다. 외부 도구 위주지만, 사내에서 비슷하게 쓸 수 있는 방법도 마지막에 같이 다룹니다.</p>
     <div class="doc-meta">
-      <span>2026-03-10</span>
       <span>Stack: Next.js 16 / Prisma 7 / Supabase / Vercel</span>
       <span>Tools: OpenSpec / Jules / Cursor Automations</span>
     </div>
@@ -479,7 +478,7 @@
       <li><a href="#step3">Step 3 — Vercel CLI</a></li>
       <li><a href="#step4">Step 4 — opencode + Copilot Agent</a></li>
       <li><a href="#step5">Step 5 — Google Jules</a></li>
-      <li><a href="#inhouse">사내 적용 인사이트</a></li>
+      <li><a href="#inhouse">사내에서도 쓸 수 있을까</a></li>
       <li><a href="#step6">Step 6 — Cursor Automations</a></li>
       <li><a href="#matrix">마무리 — 도구 매트릭스</a></li>
       <li><a href="#demo">독박게임 시연</a></li>
@@ -611,7 +610,7 @@ env:vercel-env-pull→.env.local; lang:ko-docs en-code</code></pre>
   <section id="step2">
     <span class="section-number">04</span>
     <h2>Step 2 — Next.js + Prisma + Supabase: 풀스택 기반 구축</h2>
-    <h3>스택 선택 근거</h3>
+    <h3>이 스택을 고른 이유</h3>
     <div class="table-wrap">
       <table>
         <thead><tr><th>레이어</th><th>선택</th><th>버전</th><th>이유</th></tr></thead>
@@ -701,7 +700,7 @@ vercel --prod                  # 프로덕션 즉시 배포</code></pre>
       </table>
     </div>
     <div class="callout info">
-      <p>Jules PR → Vercel Preview 자동 생성 → 스마트폰으로 UI 확인 → Merge. 이동 중에도 개발 루프를 돌릴 수 있는 이유가 이 흐름 덕분입니다.</p>
+      <p>Jules가 PR을 올리면 Vercel이 Preview URL을 자동으로 붙여줍니다. 지하철에서 스마트폰으로 확인하고 Merge하면 끝입니다.</p>
     </div>
   </section>
 
@@ -717,18 +716,7 @@ vercel --prod                  # 프로덕션 즉시 배포</code></pre>
         </tbody>
       </table>
     </div>
-    <p>둘 다 <code>openspec/project.md</code>를 컨텍스트로 넘기면 프로젝트 컨벤션을 이미 아는 상태로 작동합니다.</p>
-
-    <h3>Copilot Agent — 멀티 파일 동시 생성 예시</h3>
-<pre><code>@workspace openspec/project.md 참고해서 아래 기능 구현해줘:
-- src/components/GameResult.tsx (클라이언트 컴포넌트, 점수 저장 UI)
-- prisma/migrations/ (game_scores 테이블 + 인덱스)
-- supabase/policies/game_scores_rls.sql (RLS 보안 정책)
-- app/api/scores/route.ts (POST/GET API Route)</code></pre>
-
-    <div class="callout info">
-      <p>프롬프트 하나로 프론트 컴포넌트 + DB 마이그레이션 + 보안 정책 + API를 한 번에 뽑을 수 있습니다.</p>
-    </div>
+    <p>둘 다 <code>openspec/project.md</code>를 컨텍스트로 넘기면 프로젝트 컨벤션을 이미 아는 상태로 작동합니다. opencode는 터미널·SSH 환경에서, Copilot Agent / Cursor는 VS Code 안에서 동일한 방식으로 사용합니다.</p>
 
     <h3>Supabase RLS 정책 — 보안 설계 관점</h3>
 <pre><code>-- 인증된 사용자만 자신의 점수를 INSERT 가능
@@ -838,30 +826,54 @@ jules.google.com 접속
 
   <section id="inhouse">
     <span class="section-number">08</span>
-    <h2>사내 적용 인사이트 — 금융권 개발 환경</h2>
-    <p>금융권은 전자금융거래법·망분리 규제 때문에 외부 AI 서비스에 코드를 직접 보낼 수 없습니다. 다만 Jules의 <strong>아키텍처 패턴 자체</strong>는 사내에서 충분히 구현 가능합니다.</p>
+    <h2>사내에서도 쓸 수 있을까 — 금융권 관점에서 생각해보면</h2>
+    <p>저도 처음엔 "전금법 때문에 어차피 못 쓰겠다"고 생각했습니다. 그런데 막히는 건 <strong>외부 서버에 코드를 보내는 행위</strong>이지, 이 개발 흐름 자체가 아닙니다. 구성 요소만 사내 것으로 바꾸면 됩니다.</p>
 
+    <div class="callout warn">
+      <p>코드가 외부 서버로 나가는 게 문제입니다. <strong>에이전트가 사내망 안에서 돌면 됩니다.</strong></p>
+    </div>
+
+    <h3>Jules 기능 중 사내 적용 가능성 분류</h3>
+    <p>Jules의 모든 기능을 한 번에 구현하는 건 현실적이지 않습니다. 구현 난이도와 인프라 준비 정도에 따라 단계를 나눠보면 이렇습니다.</p>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Jules (외부)</th><th>사내 구현 가능한 형태</th></tr></thead>
+        <thead><tr><th>Jules 기능</th><th>사내 대체 방법</th><th>난이도</th><th>비고</th></tr></thead>
         <tbody>
-          <tr><td>Google 클라우드 샌드박스</td><td>사내망 내 격리 에이전트 서버</td></tr>
-          <tr><td>Gemini 모델</td><td>온프레미스 LLM (Ollama, vLLM 등)</td></tr>
-          <tr><td>GitHub 트리거</td><td>사내 GitLab / Bitbucket 웹훅</td></tr>
-          <tr><td>Vercel 프리뷰</td><td>사내 CD 파이프라인 (Jenkins / ArgoCD)</td></tr>
-          <tr><td>jules.google.com UI</td><td>사내 에이전트 대시보드</td></tr>
+          <tr><td>웹 UI로 태스크 지시</td><td>Slack 명령 / 사내 웹폼</td><td>🟢 낮음</td><td>입력 인터페이스만 있으면 됨</td></tr>
+          <tr><td>GitLab Issue 라벨 트리거</td><td>GitLab 웹훅 → 에이전트 서버</td><td>🟢 낮음</td><td>웹훅 연동 수준</td></tr>
+          <tr><td>저장소 클론 → 코드 수정 → MR 생성</td><td>사내망 격리 서버 + opencode / LLM API</td><td>🟡 중간</td><td>핵심 기능, MVP 목표</td></tr>
+          <tr><td>온프레미스 LLM 추론</td><td>Ollama / vLLM (GPU 서버 필요)</td><td>🟡 중간</td><td>GPU 인프라 확보 여부에 달림</td></tr>
+          <tr><td>CI Fixer (실패 자동 재시도)</td><td>Jenkins 파이프라인 + 에이전트 재호출</td><td>🔴 높음</td><td>CI 파이프라인 깊은 연동 필요</td></tr>
+          <tr><td>Suggested Tasks (TODO 자동 감지)</td><td>Cron + 코드 스캔 에이전트</td><td>🔴 높음</td><td>전체 저장소 상시 모니터링 필요</td></tr>
         </tbody>
       </table>
     </div>
 
-    <div class="callout warn">
-      <p>규제가 막는 건 "외부 SaaS에 코드 전송"이지, <strong>"비동기 AI 에이전트 방식 자체"가 아닙니다.</strong></p>
+    <h3>MVP — 일단 이것부터</h3>
+    <p>인프라 부담 없이 가장 빠르게 "에이전트가 MR을 올려준다"는 경험을 만들 수 있는 최소 구성입니다.</p>
+
+    <div class="def-grid">
+      <div class="def-item">
+        <div class="def-key">① GitLab 웹훅</div>
+        <div class="def-val">Issue에 특정 라벨 부착 → 에이전트 서버로 페이로드 전송. 추가 인프라 없이 GitLab 설정만으로 가능.</div>
+      </div>
+      <div class="def-item">
+        <div class="def-key">② 에이전트 서버 (사내망)</div>
+        <div class="def-val">웹훅 수신 → 저장소 클론 → LLM 호출 → 코드 수정 → MR 생성. Python + opencode CLI로 구성 가능.</div>
+      </div>
+      <div class="def-item">
+        <div class="def-key">③ LLM — 일단 외부 API</div>
+        <div class="def-val">코드가 외부로 나가지 않는 선에서 API 게이트웨이 경유도 고려 가능. GPU 서버 준비되면 Ollama로 교체.</div>
+      </div>
+      <div class="def-item">
+        <div class="def-key">④ MR + 사내 CD</div>
+        <div class="def-val">에이전트가 올린 MR → 기존 Jenkins/ArgoCD 파이프라인 그대로 타면 됨. CD 변경 없음.</div>
+      </div>
     </div>
 
-    <h3>사내 AI 코딩 에이전트 아키텍처 (제안)</h3>
     <div class="diagram-wrap">
       <div class="diagram-toolbar">
-        <span>diagram / inhouse-agent-architecture</span>
+        <span>diagram / inhouse-mvp-flow</span>
         <div class="diagram-controls">
           <button class="diagram-btn" onclick="zoomDiagram(this,-0.2)">&#8722;</button>
           <button class="diagram-btn" onclick="zoomDiagram(this,0)">reset</button>
@@ -871,32 +883,30 @@ jules.google.com 접속
       </div>
       <div class="diagram-container" data-scale="1">
         <pre class="mermaid">
-flowchart TD
-    A[개발자 지시 - 사내 메신저 / 웹 UI] --> B[에이전트 오케스트레이터 - 사내망 내 서버]
-    B --> C[온프레미스 LLM - Ollama / vLLM]
-    B --> D[사내 GitLab - 저장소 클론 & PR 생성]
-    D --> E[사내 CI/CD - Jenkins / ArgoCD]
-    E --> F[개발 / 스테이징 서버 - 격리 환경 배포]
-    F --> G[개발자 검토 - PR diff + 프리뷰 URL]
-    G -->|Approve| H[운영 반영]
+flowchart LR
+    A[GitLab Issue 라벨 부착] --> B[웹훅 수신 사내망 에이전트 서버]
+    B --> C[저장소 클론]
+    C --> D[LLM 코드 수정]
+    D --> E[MR 생성]
+    E --> F[기존 Jenkins ArgoCD]
+    F --> G[개발자 검토 및 Merge]
         </pre>
       </div>
     </div>
 
     <div class="callout info">
-      <div class="callout-label">핵심 원칙</div>
-      <p>코드와 데이터는 사내망 밖으로 나가지 않습니다. LLM은 외부 API 대신 온프레미스 모델(Ollama, vLLM 등)로 교체하면 됩니다.</p>
+      <div class="callout-label">요점</div>
+      <p>GPU 없어도 됩니다. 외부 LLM API를 게이트웨이로 감싸거나, 코드를 직접 보내지 않는 방식(diff만 전송)으로 우선 시작할 수 있습니다. <strong>MR이 자동으로 올라오는 경험 자체를 먼저 만드는 게 목표입니다.</strong></p>
     </div>
 
-    <h3>사내 도입 시 기대 효과</h3>
+    <h3>나중에 붙일 것들</h3>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>업무 패턴</th><th>현재</th><th>AI 에이전트 적용 후</th></tr></thead>
+        <thead><tr><th>단계</th><th>추가 기능</th><th>전제 조건</th></tr></thead>
         <tbody>
-          <tr><td>반복 보일러플레이트 생성</td><td>개발자 직접 작성 (수시간)</td><td>에이전트 위임 → PR 검토만 (30분)</td></tr>
-          <tr><td>레거시 코드 테스트 작성</td><td>일정에서 우선순위 밀림</td><td>Cron 기반 야간 자동 생성</td></tr>
-          <tr><td>의존성 보안 패치</td><td>분기별 수동 작업</td><td>주간 자동 PR + 담당자 알림</td></tr>
-          <tr><td>코드 리뷰 1차 검토</td><td>시니어 리뷰어 시간 소비</td><td>에이전트 인라인 코멘트 선제공</td></tr>
+          <tr><td>2단계</td><td>온프레미스 LLM으로 교체 (Ollama / vLLM)</td><td>GPU 서버 확보</td></tr>
+          <tr><td>3단계</td><td>CI 실패 시 에이전트 자동 재시도</td><td>Jenkins 파이프라인 연동</td></tr>
+          <tr><td>4단계</td><td>Cron 기반 야간 작업 (테스트 생성, 보안 패치)</td><td>에이전트 스케줄러 구성</td></tr>
         </tbody>
       </table>
     </div>
@@ -981,7 +991,7 @@ Cron (매일 03:00) → 테스트 없는 함수 탐지
       </table>
     </div>
 
-    <h3>패러다임 전환</h3>
+    <h3>개발 방식이 바뀌는 느낌</h3>
 <pre><code>[이전]
 개발자 → 에디터에서 코드 작성 → 커밋 → 배포
 
@@ -992,14 +1002,14 @@ Cron (매일 03:00) → 테스트 없는 함수 탐지
 트리거 발생 → 에이전트가 자동 판단 → PR 생성 → 개발자가 Approve만</code></pre>
 
     <div class="callout info">
-      <p>개발자의 역할이 "코드를 직접 치는 사람"에서 <strong>"에이전트가 올바르게 움직이도록 컨텍스트와 트리거를 설계하는 사람"</strong>으로 바뀌고 있습니다.</p>
+      <p>요즘 드는 생각은, 코드 짜는 시간보다 <strong>에이전트한테 뭘 어떻게 시킬지 설계하는 시간</strong>이 더 길어졌다는 겁니다.</p>
     </div>
   </section>
 
   <section id="demo">
     <span class="section-number">11</span>
     <h2>실시간 시연 — 독박게임</h2>
-    <p>이 워크플로우를 그대로 적용해서 실제로 만들고 있는 프로젝트입니다.</p>
+    <p>지금까지 설명한 걸 실제로 쓰고 있는 프로젝트입니다. 직접 보여드리겠습니다.</p>
     <div class="img-wrap">
       <img src="22kBv.png" alt="독박게임 QR 코드" />
       <div class="img-desc">
@@ -1012,8 +1022,134 @@ Cron (매일 03:00) → 테스트 없는 함수 탐지
         </ul>
       </div>
     </div>
-    <h3>Jules 실시간 시연</h3>
-<pre><code>jules remote new --session "..."</code></pre>
+    <h3>Jules 시연 — 단계별 흐름</h3>
+
+    <div class="callout info">
+      <div class="callout-label">시연 순서</div>
+      <p>Jules 대시보드 확인 → 웹에서 새 세션 생성 → GitHub Issue 라벨 방식 → 모바일 지시 → PR·배포 연결 확인</p>
+    </div>
+
+    <!-- STEP A -->
+    <h4>STEP 1 — jules.google.com: 대시보드에서 진행 중인 작업 확인</h4>
+    <p>Jules에 접속하면 저장소별로 현재 실행 중·완료된 세션 목록이 보입니다. 각 세션은 어떤 파일을 수정했는지, 서브태스크가 어디까지 진행됐는지 실시간으로 표시됩니다.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>상태</th><th>표시 내용</th></tr></thead>
+        <tbody>
+          <tr><td>🟡 In Progress</td><td>현재 수정 중인 파일 목록, 서브태스크 진행 단계</td></tr>
+          <tr><td>✅ Completed</td><td>생성된 PR 링크, 변경된 파일 수, diff 요약</td></tr>
+          <tr><td>❌ Failed</td><td>실패 원인 로그, CI Fixer 자동 재시도 여부</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>CLI에서도 동일하게 확인할 수 있습니다.</p>
+<pre><code># 현재 저장소의 모든 세션 조회
+jules remote list --repo
+
+# 출력 예시
+SESSION ID   STATUS       TITLE                        PR
+sess_a1b2    completed    랭킹 1~3위 배경색 적용        #31
+sess_c3d4    in_progress  닉네임 컬럼 추가              -
+sess_e5f6    completed    npm audit fix (scheduled)    #29</code></pre>
+
+    <!-- STEP B -->
+    <h4>STEP 2 — 웹에서 새 세션 생성 → 프로젝트에 반영</h4>
+    <p><strong>jules.google.com</strong>에서 저장소를 선택하고 지시를 입력하면 Google 클라우드 샌드박스에서 즉시 실행됩니다. 로컬 PC가 꺼져 있어도 무관합니다.</p>
+<pre><code>// 웹 UI 입력창 예시
+Repository : Mike-kor/dokbakgame
+Branch     : feature/score-badge
+
+Task :
+랭킹 페이지에서 1~3위에 배지 아이콘 추가
+- /app/ranking/page.tsx 수정
+- Tailwind 클래스 사용, gold/silver/bronze 색상
+- 4위 이하는 기존 스타일 유지</code></pre>
+
+    <div class="diagram-wrap">
+      <div class="diagram-toolbar">
+        <span>diagram / jules-session-flow</span>
+        <div class="diagram-controls">
+          <button class="diagram-btn" onclick="zoomDiagram(this,-0.2)">&#8722;</button>
+          <button class="diagram-btn" onclick="zoomDiagram(this,0)">reset</button>
+          <button class="diagram-btn" onclick="zoomDiagram(this,0.2)">&#43;</button>
+          <button class="diagram-btn" onclick="expandDiagram(this)">expand</button>
+        </div>
+      </div>
+      <div class="diagram-container" data-scale="1">
+        <pre class="mermaid">
+flowchart LR
+    A[웹 UI 지시 입력] --> B[Google 클라우드 샌드박스]
+    B --> C[저장소 클론]
+    C --> D[코드 수정]
+    D --> E[테스트 실행]
+    E --> F[PR 생성]
+    F --> G[Vercel Preview URL 자동 첨부]
+        </pre>
+      </div>
+    </div>
+
+    <!-- STEP C -->
+    <h4>STEP 3 — GitHub Issue에 <code>jules</code> 라벨 → 자동 작업 지시</h4>
+    <p>Issue를 별도로 Jules에 전달할 필요가 없습니다. <strong>이슈에 <code>jules</code> 라벨만 붙이면</strong> Jules가 이슈 본문을 읽고 스스로 세션을 시작합니다. 팀원이 이슈를 등록하고 라벨만 붙여도 작업이 시작됩니다.</p>
+<pre><code>// GitHub Issue #34 예시
+Title : [feat] 게임 종료 후 공유 버튼 추가
+Label : jules, enhancement
+
+Body :
+게임 결과 화면 하단에 카카오톡 공유 버튼 추가
+- /app/game/result/page.tsx
+- kakao SDK는 이미 설치되어 있음 (lib/kakao.ts 참고)
+- 공유 텍스트: "나는 {score}점! 도전해봐 → {url}"</code></pre>
+
+    <div class="callout info">
+      <p>이슈 등록자가 개발자일 필요도 없습니다. <strong>기획자·QA가 이슈를 쓰고 라벨을 붙이면, Jules가 코드로 구현해 PR을 올립니다.</strong></p>
+    </div>
+
+    <!-- STEP D -->
+    <h4>STEP 4 — 모바일에서 지시 → 작업 진행 중 확인</h4>
+    <p>스마트폰 브라우저로 <strong>jules.google.com</strong>에 접속해 지시를 입력합니다. 이동 중, 회의 중, 퇴근 후 어디서든 개발 루프를 시작할 수 있습니다.</p>
+<pre><code>[시나리오 — 출근길 09:05]
+스마트폰으로 jules.google.com 접속
+→ New Session 탭
+→ "프로필 페이지 닉네임 수정 기능 추가.
+   - /app/profile/page.tsx
+   - Prisma User 모델에 nickname 필드 없으면 migration 포함"
+→ Submit
+
+[09:07 — Jules 작업 시작됨]
+세션 상태: In Progress
+서브태스크: schema.prisma 확인 중...
+
+[09:22 — 작업 완료]
+세션 상태: Completed
+PR #38 생성됨
+Vercel Preview: https://dokbakgame-git-feat-nickname-xxx.vercel.app
+
+[09:25 — 회사 도착]
+GitHub 모바일 → PR diff 확인
+Vercel Preview URL → UI 확인
+Approve + Merge → 프로덕션 자동 배포</code></pre>
+
+    <!-- STEP E -->
+    <h4>STEP 5 — PR → Vercel 배포 연결 확인</h4>
+    <p>Jules가 올린 PR에는 Vercel 봇이 <strong>프리뷰 URL을 자동으로 댓글로 첨부</strong>합니다. Approve 하는 순간 <code>main</code> 브랜치에 머지되고, Vercel이 프로덕션 빌드를 자동으로 시작합니다.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>단계</th><th>자동 처리 내용</th><th>개발자 액션</th></tr></thead>
+        <tbody>
+          <tr><td>PR 생성</td><td>Vercel Preview 빌드 시작</td><td>—</td></tr>
+          <tr><td>PR 본문</td><td>Preview URL 자동 첨부</td><td>모바일로 UI 확인</td></tr>
+          <tr><td>CI 통과</td><td>lint / type-check / build 자동 실행</td><td>—</td></tr>
+          <tr><td>Approve + Merge</td><td>Production 빌드 자동 시작</td><td>Approve 버튼 클릭</td></tr>
+          <tr><td>배포 완료</td><td>Slack / GitHub 알림 발송</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout info">
+      <p>개발자가 직접 하는 것은 <strong>PR diff 읽기 → Approve 클릭</strong> 두 가지뿐입니다. 나머지는 모두 자동입니다.</p>
+    </div>
+
+    <h3>이 프로젝트에 사용된 패키지</h3>
     <div class="table-wrap">
       <table>
         <thead><tr><th>패키지</th><th>용도</th></tr></thead>
@@ -1051,7 +1187,6 @@ Cron (매일 03:00) → 테스트 없는 함수 탐지
 
   <footer class="doc-footer">
     <span>AI 에이전트 기반 풀스택 개발 워크플로우</span>
-    <span>2026-03-10</span>
   </footer>
 
 </div>
