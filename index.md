@@ -477,7 +477,6 @@
       <li><a href="#workflow">전체 흐름 한눈에 보기</a></li>
       <li><a href="#context">핵심 원리 — 컨텍스트 설계</a></li>
       <li><a href="#async">비동기 AI 에이전트 — Google Jules</a></li>
-      <li><a href="#automation">상시 자동화 — Cursor Automations</a></li>
       <li><a href="#inhouse">사내 적용 가능성 — 금융권 관점</a></li>
       <li><a href="#demo">실증 사례 — 독박게임</a></li>
       <li><a href="#matrix">도구 선택 가이드</a></li>
@@ -573,7 +572,6 @@ flowchart LR
     E --> G[GitHub PR]
     F --> G
     G --> H[자동 배포\nVercel]
-    H --> I[상시 자동화\nCursor Automations]
         </pre>
       </div>
     </div>
@@ -665,59 +663,16 @@ flowchart LR
         <div class="def-val">Gemini 3 Flash 기준 — 라우팅 구조 파악, DB 연동 PR까지 스스로 처리. 체감상 주니어 개발자 수준</div>
       </div>
     </div>
+
+    <div class="callout info">
+      <div class="callout-label">다음 단계 — Cursor Automations (2026.03.05 출시)</div>
+      <p>Jules가 "지시를 받아야 움직이는" 에이전트라면, <strong>Cursor Automations</strong>는 지시 없이도 이벤트(빌드 실패, PR 오픈, Cron 등)에 반응해 스스로 PR을 생성합니다. 개발자가 아무것도 하지 않아도 빌드가 복구되고, 보안 리뷰 코멘트가 달리며, 테스트가 채워집니다. Jules와 함께 쓰면 개발자는 Approve만으로 개발 사이클을 완결할 수 있습니다.</p>
+    </div>
   </section>
 
   <!-- ── 06 ── -->
-  <section id="automation">
-    <span class="section-number">06</span>
-    <h2>상시 자동화 — Cursor Automations</h2>
-    <p>Jules가 "지시를 받으면 실행"하는 에이전트라면, Cursor Automations는 지시 없이도 <strong>이벤트가 발생하면 스스로 판단하고 움직입니다.</strong> 2026년 3월 5일 정식 출시되었습니다.</p>
-
-    <div class="diagram-wrap">
-      <div class="diagram-toolbar">
-        <span>diagram / cursor-automations-triggers</span>
-        <div class="diagram-controls">
-          <button class="diagram-btn" onclick="zoomDiagram(this,-0.2)">&#8722;</button>
-          <button class="diagram-btn" onclick="zoomDiagram(this,0)">reset</button>
-          <button class="diagram-btn" onclick="zoomDiagram(this,0.2)">&#43;</button>
-          <button class="diagram-btn" onclick="expandDiagram(this)">expand</button>
-        </div>
-      </div>
-      <div class="diagram-container" data-scale="1">
-        <pre class="mermaid">
-flowchart LR
-    A[빌드 실패\nVercel Webhook] --> Z[Cursor\nCloud Agent]
-    B[PR 오픈\nGitHub 트리거] --> Z
-    C[장애 발생\nPagerDuty] --> Z
-    D[정기 스케줄\nCron] --> Z
-    Z --> G[핫픽스 PR 자동 생성]
-    Z --> H[보안 리뷰 코멘트]
-    Z --> I[테스트 커버리지 확장]
-    Z --> J[Slack 알림 발송]
-        </pre>
-      </div>
-    </div>
-
-    <h3>대표 활용 시나리오</h3>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>트리거</th><th>에이전트 행동</th><th>개발자 역할</th></tr></thead>
-        <tbody>
-          <tr><td>배포 빌드 실패</td><td>에러 로그·diff 분석 → 원인 코드 수정 → 핫픽스 PR + Slack 알림</td><td>모바일에서 Approve만</td></tr>
-          <tr><td>feature/* PR 오픈</td><td>diff 분석 → RLS 누락·SQL Injection 패턴 검사 → PR 인라인 코멘트</td><td>1차 검토 없이 바로 본론</td></tr>
-          <tr><td>매일 새벽 03:00</td><td>테스트 없는 함수 탐지 → 테스트 코드 작성 → PR 생성</td><td>주 1회 batch 리뷰</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div class="callout info">
-      <p>Cursor Automations의 가치는 <strong>시니어 개발자의 주의력이 반복 작업에 소모되지 않도록</strong> 하는 데 있습니다. 보안 리뷰·테스트 작성·빌드 복구 같은 작업을 에이전트가 선제적으로 처리하면, 사람은 아키텍처와 비즈니스 로직에 집중할 수 있습니다.</p>
-    </div>
-  </section>
-
-  <!-- ── 07 ── -->
   <section id="inhouse">
-    <span class="section-number">07</span>
+    <span class="section-number">06</span>
     <h2>사내 적용 가능성 — 금융권 관점</h2>
     <p>전자금융거래법·망분리 규제로 외부 AI 서비스에 코드를 직접 전송할 수 없는 환경입니다. 그러나 규제가 막는 것은 <strong>"외부 SaaS 사용"이지, 비동기 AI 에이전트 구조 자체가 아닙니다.</strong> Jules의 아키텍처는 사내망 안에서 동일하게 구현 가능합니다.</p>
 
@@ -726,11 +681,11 @@ flowchart LR
       <table>
         <thead><tr><th>외부 서비스 (Jules)</th><th>사내 대체 구현</th><th>기술적 난이도</th></tr></thead>
         <tbody>
-          <tr><td>Google 클라우드 샌드박스</td><td>사내망 격리 에이전트 서버</td><td>중</td></tr>
-          <tr><td>Gemini 모델</td><td>온프레미스 LLM (Ollama, vLLM, 사내 GPU 서버)</td><td>중~高</td></tr>
-          <tr><td>GitHub 저장소 연동</td><td>사내 GitLab / Bitbucket 웹훅</td><td>低</td></tr>
-          <tr><td>Vercel 프리뷰 배포</td><td>사내 Jenkins / ArgoCD 파이프라인</td><td>低 (기존 인프라 활용)</td></tr>
-          <tr><td>jules.google.com 대시보드</td><td>사내 에이전트 관제 UI</td><td>중</td></tr>
+          <tr><td>Google 클라우드 샌드박스</td><td>사내망 격리 에이전트 서버</td><td>Medium</td></tr>
+          <tr><td>Gemini 모델</td><td>온프레미스 LLM (Ollama, vLLM, 사내 GPU 서버)</td><td>Medium~High</td></tr>
+          <tr><td>GitHub 저장소 연동</td><td>사내 Bitbucket 웹훅</td><td>Low</td></tr>
+          <tr><td>Vercel 프리뷰 배포</td><td>사내 Jenkins / Jarvis 파이프라인</td><td>Low (기존 인프라 활용)</td></tr>
+          <tr><td>jules.google.com 대시보드</td><td>사내 에이전트 관제 UI</td><td>Medium</td></tr>
         </tbody>
       </table>
     </div>
@@ -751,8 +706,8 @@ flowchart LR
 flowchart TD
     A[개발자 지시\n메신저 / 웹 UI] --> B[에이전트 오케스트레이터\n사내망 서버]
     B --> C[온프레미스 LLM\nOllama / vLLM]
-    B --> D[사내 GitLab\nPR 생성]
-    D --> E[사내 CI/CD\nJenkins / ArgoCD]
+    B --> D[사내 Bitbucket\nPR 생성]
+    D --> E[사내 CI/CD\nJenkins / Jarvis]
     E --> F[스테이징 서버\n격리 환경 배포]
     F --> G[개발자 검토\nPR + 프리뷰 URL]
     G -->|Approve| H[운영 반영]
@@ -779,9 +734,9 @@ flowchart TD
     </div>
   </section>
 
-  <!-- ── 08 ── -->
+  <!-- ── 07 ── -->
   <section id="demo">
-    <span class="section-number">08</span>
+    <span class="section-number">07</span>
     <h2>실증 사례 — 독박게임</h2>
     <p>이 워크플로우를 실제로 적용해 운영 중인 프로젝트입니다. 기획·개발·배포를 1인이 처리하면서 AI 에이전트를 통해 사실상 팀 개발 수준의 속도를 유지하고 있습니다.</p>
 
@@ -793,7 +748,7 @@ flowchart TD
           <li>실시간 멀티플레이 보드게임 — 1인 개발·운영</li>
           <li>Jules로 기능 위임 → PR → 모바일 Approve → 자동 배포 흐름 실사용 중</li>
           <li>Copilot Agent로 DB 스키마 변경·보안 정책을 한 프롬프트로 생성</li>
-          <li>Cursor Automations로 빌드 실패 자동 감지·수정</li>
+          <li>Cursor Automations(2026.03 출시)로 빌드 실패 자동 감지·수정 가능성 확인 중</li>
         </ul>
       </div>
     </div>
@@ -803,9 +758,9 @@ flowchart TD
     </div>
   </section>
 
-  <!-- ── 09 ── -->
+  <!-- ── 08 ── -->
   <section id="matrix">
-    <span class="section-number">09</span>
+    <span class="section-number">08</span>
     <h2>도구 선택 가이드</h2>
     <p>상황과 목적에 따라 적합한 도구가 다릅니다.</p>
 
@@ -816,16 +771,16 @@ flowchart TD
           <tr><td>프로젝트 착수 / AI 컨텍스트 구성</td><td>OpenSpec</td><td>모든 AI 도구의 공통 지식 베이스 확립</td></tr>
           <tr><td>에디터에서 즉각적인 코딩 지원</td><td>GitHub Copilot Agent</td><td>멀티 파일 동시 생성, 즉각 피드백</td></tr>
           <tr><td>자리를 비운 상태에서 기능 개발 위임</td><td>Google Jules</td><td>비동기 실행, 태스크 건당 고정 비용</td></tr>
-          <tr><td>이벤트 기반 상시 자동화</td><td>Cursor Automations</td><td>무인 빌드 복구, 보안 리뷰, 테스트 생성</td></tr>
+          <tr><td>이벤트 기반 상시 자동화 (Next Step)</td><td>Cursor Automations <span style="font-size:11px;color:var(--text-muted);">2026.03 출시</span></td><td>빌드 실패·PR 오픈 등 트리거에 반응해 에이전트가 자동 실행 — 별도 지시 불필요</td></tr>
           <tr><td>사내망 환경 (망분리)</td><td>사내 에이전트 서버 + 온프레미스 LLM</td><td>Jules 아키텍처를 내부 인프라로 구현</td></tr>
         </tbody>
       </table>
     </div>
   </section>
 
-  <!-- ── 10 ── -->
+  <!-- ── 09 ── -->
   <section id="refs">
-    <span class="section-number">10</span>
+    <span class="section-number">09</span>
     <h2>참고 자료</h2>
     <div class="table-wrap">
       <table>
